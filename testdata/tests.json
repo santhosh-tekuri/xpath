@@ -14,7 +14,13 @@
         "3 > 2 > 1": false,
         "3 >= 2 >= 2": false,
         "1 < 2 < 3": true,
-        "2 <= 2 <= 3": true
+        "2 <= 2 <= 3": true,
+        "/numbers/set/nr = '-3'": true,
+        "/numbers/set/nr = -3": true,
+        "/numbers/set/nr = 24": true,
+        "/numbers/set/nr/@value = '9999'": true,
+        "/numbers/set/nr/@value = 9999.0": true,
+        "/numbers/set/nr/@value = 66": true
       }
     }
   },

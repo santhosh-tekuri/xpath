@@ -20,6 +20,8 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		return numberVal(e)
 	case xpath.String:
 		return stringVal(e)
+	case *xpath.NegateExpr:
+		return &negateExpr{asNumber(c.compile(e.Expr))}
 	case *xpath.BinaryExpr:
 		lhs := c.compile(e.LHS)
 		rhs := c.compile(e.RHS)
@@ -376,6 +378,20 @@ func (f *stringFunc) eval(ctx dom.Node) interface{} {
 	default:
 		panic(fmt.Sprintf("stringFunc(%T) is not implemented", r))
 	}
+}
+
+/************************************************************************/
+
+type negateExpr struct {
+	num expr
+}
+
+func (*negateExpr) resultType() ResultType {
+	return Number
+}
+
+func (e *negateExpr) eval(ctx dom.Node) interface{} {
+	return -e.num.eval(ctx).(float64)
 }
 
 /************************************************************************/
