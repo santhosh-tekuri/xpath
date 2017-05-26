@@ -1,0 +1,58 @@
+{
+  "numbers.xml": {
+    "namespaces": {},
+    "variables": {},
+    "contexts": {
+      "/": {
+        "(8 * 2 + 1) = 17": true,
+        "(1 + 8 * 2) = 17": true,
+        "(7 - 3 + 1) = 5": true,
+        "(8 - 4 + 5 - 6) = 3": true,
+        "3 - 2 - 1": 0,
+        "8 div 4 div 2": 1,
+        "3 mod 7 mod 5": 3,
+        "1 = 2 = 2": false,
+        "2 != 3 != 1": false,
+        "3 > 2 > 1": false,
+        "3 >= 2 >= 2": false,
+        "1 < 2 < 3": true,
+        "2 <= 2 <= 3": true
+      }
+    }
+  },
+  "simple.xml": {
+    "contexts": {
+      "/": {
+        "string()": "abd"
+      },
+      "/root": {
+        "string()": "abd"
+      },
+      "/root/a": {
+        "string()": "a"
+      },
+      "/root/c": {
+        "string()": "d"
+      }
+    }
+  },
+  "pi.xml": {
+    "contexts": {
+      "/": {
+        "//processing-instruction()": [
+          "/foo[1]/processing-instruction(\"cheese\")[1]",
+          "/foo[1]/bar[1]/processing-instruction(\"toast\")[1]",
+          "/foo[1]/processing-instruction(\"cheese\")[2]"
+        ],
+        "//processing-instruction('cheese')": [
+          "/foo[1]/processing-instruction(\"cheese\")[1]",
+          "/foo[1]/processing-instruction(\"cheese\")[2]"
+        ],
+        "//processing-instruction('toast')": [
+          "/foo[1]/bar[1]/processing-instruction(\"toast\")[1]"
+        ],
+        "string(//processing-instruction('toast'))": "is tasty"
+      }
+    }
+  }
+}
