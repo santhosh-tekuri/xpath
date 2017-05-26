@@ -77,5 +77,19 @@
         "string(preceding-sibling::processing-instruction())": "order-by=\"x\""
       }
     }
+  },
+  "id.xml" : {
+    "contexts": {
+      "/": {
+        "/foo/@id/parent::foo": [
+          "/foo[1]"
+        ]
+      },
+      "/foo/@id": {
+        "parent::foo": [
+          "/foo[1]"
+        ]
+      }
+    }
   }
 }

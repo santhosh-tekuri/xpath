@@ -131,7 +131,19 @@ func getContext(d *dom.Document, s string) dom.Node {
 	for _, tok := range strings.Split(s[1:], "/") {
 		if strings.HasPrefix(tok, "@") {
 			tok = strings.TrimPrefix(tok, "@")
-			panic("attribute context is not implemented")
+			colon := strings.IndexByte(tok, ':')
+			if colon == -1 {
+				e, ok := n.(*dom.Element)
+				if !ok {
+					panic("attribute in context on non-element")
+				}
+				n = e.GetAttr("", tok)
+				if n == nil {
+					panic("cannot find attribute mentioned in context")
+				}
+			} else {
+				panic("context with attribute with namespace is not implemented")
+			}
 		} else {
 			colon := strings.IndexByte(tok, ':')
 			if colon == -1 {

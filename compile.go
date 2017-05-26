@@ -78,8 +78,12 @@ func compile(expr xpath.Expr) expr {
 			case *xpath.NameTest:
 				switch estep.Axis {
 				case xpath.Attribute:
-					if test.Prefix == "" && test.Local == "*" {
-						s.test = alwaysTrue
+					if test.Prefix == "" {
+						if test.Local == "*" {
+							s.test = alwaysTrue
+						} else {
+							s.test = testAttrName("", test.Local)
+						}
 					} else {
 						panic("tests on attribute axis is not implemented")
 					}
@@ -90,8 +94,12 @@ func compile(expr xpath.Expr) expr {
 						panic("tests on namespace axis is not implemented")
 					}
 				default:
-					if test.Prefix == "" && test.Local == "*" {
-						s.test = isElement
+					if test.Prefix == "" {
+						if test.Local == "*" {
+							s.test = isElement
+						} else {
+							s.test = testElementName("", test.Local)
+						}
 					} else {
 						panic("nametest is not implemented yet")
 					}
