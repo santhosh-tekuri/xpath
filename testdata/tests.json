@@ -65,7 +65,7 @@
         "//processing-instruction()": [
           "/a[1]/processing-instruction(\"toc\")[1]"
         ],
-        "preceding-sibling::*" : [
+        "preceding-sibling::*": [
           "/a[1]/b[1]"
         ],
         "preceding-sibling::node()": [
@@ -82,7 +82,7 @@
       }
     }
   },
-  "id.xml" : {
+  "id.xml": {
     "/": {
       "xpaths": {
         "/foo/@id/parent::foo": [
@@ -114,6 +114,185 @@
         "string(/foo:a/foo:d/foo:e)": "Hey",
         "string(/foo:a/alias:x/alias:y)": "Hey3",
         "string(/foo:a/foo:x/foo:y)": "Hey3"
+      }
+    }
+  },
+  "much_ado.xml": {
+    "/": {
+      "xpaths": {
+        "/descendant::ACT": [
+          "/PLAY[1]/ACT[1]",
+          "/PLAY[1]/ACT[2]",
+          "/PLAY[1]/ACT[3]",
+          "/PLAY[1]/ACT[4]",
+          "/PLAY[1]/ACT[5]"
+        ],
+        "descendant::ACT": [
+          "/PLAY[1]/ACT[1]",
+          "/PLAY[1]/ACT[2]",
+          "/PLAY[1]/ACT[3]",
+          "/PLAY[1]/ACT[4]",
+          "/PLAY[1]/ACT[5]"
+        ],
+        "string(/PLAY/TITLE)": "Much Ado about Nothing",
+        "2+2": 4,
+        "5 * 4 + 1": 21
+      }
+    }
+  },
+  "web.xml": {
+    "/": {
+      "xpaths": {
+        "descendant-or-self::*": [
+          "/web-app[1]",
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[1]/servlet-name[1]",
+          "/web-app[1]/servlet[1]/servlet-class[1]",
+          "/web-app[1]/servlet[2]",
+          "/web-app[1]/servlet[2]/servlet-name[1]",
+          "/web-app[1]/servlet[2]/servlet-class[1]",
+          "/web-app[1]/servlet[2]/init-param[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/param-name[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/param-value[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/description[1]",
+          "/web-app[1]/servlet-mapping[1]",
+          "/web-app[1]/servlet-mapping[1]/servlet-name[1]",
+          "/web-app[1]/servlet-mapping[1]/url-pattern[1]",
+          "/web-app[1]/distributed[1]",
+          "/web-app[1]/security-role[1]",
+          "/web-app[1]/security-role[1]/role-name[1]",
+          "/web-app[1]/security-role[1]/role-name[2]",
+          "/web-app[1]/security-role[1]/role-name[3]"
+        ],
+        "descendant::*": [
+          "/web-app[1]",
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[1]/servlet-name[1]",
+          "/web-app[1]/servlet[1]/servlet-class[1]",
+          "/web-app[1]/servlet[2]",
+          "/web-app[1]/servlet[2]/servlet-name[1]",
+          "/web-app[1]/servlet[2]/servlet-class[1]",
+          "/web-app[1]/servlet[2]/init-param[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/param-name[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/param-value[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/description[1]",
+          "/web-app[1]/servlet-mapping[1]",
+          "/web-app[1]/servlet-mapping[1]/servlet-name[1]",
+          "/web-app[1]/servlet-mapping[1]/url-pattern[1]",
+          "/web-app[1]/distributed[1]",
+          "/web-app[1]/security-role[1]",
+          "/web-app[1]/security-role[1]/role-name[1]",
+          "/web-app[1]/security-role[1]/role-name[2]",
+          "/web-app[1]/security-role[1]/role-name[3]"
+        ],
+        "/descendant::*": [
+          "/web-app[1]",
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[1]/servlet-name[1]",
+          "/web-app[1]/servlet[1]/servlet-class[1]",
+          "/web-app[1]/servlet[2]",
+          "/web-app[1]/servlet[2]/servlet-name[1]",
+          "/web-app[1]/servlet[2]/servlet-class[1]",
+          "/web-app[1]/servlet[2]/init-param[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/param-name[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/param-value[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/description[1]",
+          "/web-app[1]/servlet-mapping[1]",
+          "/web-app[1]/servlet-mapping[1]/servlet-name[1]",
+          "/web-app[1]/servlet-mapping[1]/url-pattern[1]",
+          "/web-app[1]/distributed[1]",
+          "/web-app[1]/security-role[1]",
+          "/web-app[1]/security-role[1]/role-name[1]",
+          "/web-app[1]/security-role[1]/role-name[2]",
+          "/web-app[1]/security-role[1]/role-name[3]"
+        ],
+        "/descendant-or-self::*": [
+          "/web-app[1]",
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[1]/servlet-name[1]",
+          "/web-app[1]/servlet[1]/servlet-class[1]",
+          "/web-app[1]/servlet[2]",
+          "/web-app[1]/servlet[2]/servlet-name[1]",
+          "/web-app[1]/servlet[2]/servlet-class[1]",
+          "/web-app[1]/servlet[2]/init-param[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/param-name[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/param-value[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/description[1]",
+          "/web-app[1]/servlet-mapping[1]",
+          "/web-app[1]/servlet-mapping[1]/servlet-name[1]",
+          "/web-app[1]/servlet-mapping[1]/url-pattern[1]",
+          "/web-app[1]/distributed[1]",
+          "/web-app[1]/security-role[1]",
+          "/web-app[1]/security-role[1]/role-name[1]",
+          "/web-app[1]/security-role[1]/role-name[2]",
+          "/web-app[1]/security-role[1]/role-name[3]"
+        ],
+        "/descendant::servlet": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[2]"
+        ],
+        "/descendant-or-self::servlet": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[2]"
+        ],
+        "descendant-or-self::servlet": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[2]"
+        ],
+        "descendant::servlet": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[2]"
+        ],
+        "/*/servlet": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[2]"
+        ],
+        "//servlet": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[2]"
+        ]
+      }
+    },
+    "/web-app": {
+      "xpaths": {
+        "/descendant::servlet": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[2]"
+        ],
+        "/descendant-or-self::servlet": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[2]"
+        ],
+        "descendant-or-self::servlet": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[2]"
+        ],
+        "descendant::servlet": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[2]"
+        ]
+      }
+    }
+  },
+  "underscore.xml": {
+    "/": {
+      "xpaths": {
+        "/root/@a": [
+          "/root[1]/@a"
+        ],
+        "/root/@_a": [
+          "/root[1]/@_a"
+        ],
+        "/root/b": [
+          "/root[1]/b[1]"
+        ],
+        "/root/_b": [
+          "/root[1]/_b[1]"
+        ],
+        "string(/root/@a)": "1",
+        "string(/root/@_a)": "2",
+        "string(/root/b)": "1",
+        "string(/root/_b)": "2"
       }
     }
   }
