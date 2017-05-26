@@ -1,7 +1,7 @@
 {
   "numbers.xml": {
-    "contexts": {
-      "/": {
+    "/": {
+      "xpaths": {
         "(8 * 2 + 1) = 17": true,
         "(1 + 8 * 2) = 17": true,
         "(7 - 3 + 1) = 5": true,
@@ -19,24 +19,30 @@
     }
   },
   "simple.xml": {
-    "contexts": {
-      "/": {
+    "/": {
+      "xpaths": {
         "string()": "abd"
-      },
-      "/root": {
+      }
+    },
+    "/root": {
+      "xpaths": {
         "string()": "abd"
-      },
-      "/root/a": {
+      }
+    },
+    "/root/a": {
+      "xpaths": {
         "string()": "a"
-      },
-      "/root/c": {
+      }
+    },
+    "/root/c": {
+      "xpaths": {
         "string()": "d"
       }
     }
   },
   "pi.xml": {
-    "contexts": {
-      "/": {
+    "/": {
+      "xpaths": {
         "//processing-instruction()": [
           "/foo[1]/processing-instruction(\"cheese\")[1]",
           "/foo[1]/bar[1]/processing-instruction(\"toast\")[1]",
@@ -54,8 +60,8 @@
     }
   },
   "pi2.xml": {
-    "contexts": {
-      "/a/c": {
+    "/a/c": {
+      "xpaths": {
         "//processing-instruction()": [
           "/a[1]/processing-instruction(\"toc\")[1]"
         ],
@@ -77,13 +83,15 @@
     }
   },
   "id.xml" : {
-    "contexts": {
-      "/": {
+    "/": {
+      "xpaths": {
         "/foo/@id/parent::foo": [
           "/foo[1]"
         ]
-      },
-      "/foo/@id": {
+      }
+    },
+    "/foo/@id": {
+      "xpaths": {
         "parent::foo": [
           "/foo[1]"
         ]
@@ -91,14 +99,14 @@
     }
   },
   "namespaces.xml": {
-    "namespaces": {
-      "foo": "http://fooNamespace/",
-      "voo": "http://fooNamespace/",
-      "bar": "http://barNamespace/",
-      "alias": "http://fooNamespace/"
-    },
-    "contexts": {
-      "/": {
+    "/": {
+      "namespaces": {
+        "foo": "http://fooNamespace/",
+        "voo": "http://fooNamespace/",
+        "bar": "http://barNamespace/",
+        "alias": "http://fooNamespace/"
+      },
+      "xpaths": {
         "/*": [
           "/alias:a[1]"
         ],

@@ -25,9 +25,9 @@ func TestEval(t *testing.T) {
 	if err := json.Unmarshal(data, &m); err != nil {
 		t.Fatal(err)
 	}
-	for k, v := range m {
-		t.Log(k)
-		f, err := os.Open("testdata/files/" + k)
+	for file, contexts := range m {
+		t.Log(file)
+		f, err := os.Open("testdata/files/" + file)
 		if err != nil {
 			t.Error("FAIL:", err)
 			continue
@@ -38,66 +38,79 @@ func TestEval(t *testing.T) {
 			continue
 		}
 
-		v := v.(map[string]interface{})
-		ns := map[string]string{
-			"":    "",
-			"xml": "http://www.w3.org/XML/1998/namespace",
-		}
-		if _, ok := v["namespaces"]; ok {
-			for k, v := range v["namespaces"].(map[string]interface{}) {
-				ns[k] = v.(string)
-			}
-		}
+		contexts := contexts.(map[string]interface{})
+		for contextStr, v := range contexts {
+			t.Log(" ", contextStr)
+			context := getContext(doc, contextStr)
+			v := v.(map[string]interface{})
 
-		c := NewCompiler(ns)
-		for k, v := range v["contexts"].(map[string]interface{}) {
-			t.Log(" ", k)
-			context := getContext(doc, k)
-			for k, v := range v.(map[string]interface{}) {
-				t.Log("    ", k)
-				xpath, err := c.Compile(k)
+			prefix2uri := make(map[string]string)
+			uri2prefix := make(map[string]string)
+			if namespaces, ok := v["namespaces"]; ok {
+				namespaces := namespaces.(map[string]interface{})
+				for prefix, uri := range namespaces {
+					uri := uri.(string)
+					prefix2uri[prefix] = uri
+					curPrefix, ok := uri2prefix[uri]
+					if ok {
+						if prefix < curPrefix {
+							uri2prefix[uri] = prefix
+						}
+					} else {
+						uri2prefix[uri] = prefix
+					}
+				}
+			}
+
+			compiler := NewCompiler(prefix2uri)
+			xpaths := v["xpaths"].(map[string]interface{})
+			for xpathStr, expected := range xpaths {
+				t.Log("    ", xpathStr)
+
+				xpath, err := compiler.Compile(xpathStr)
 				if err != nil {
 					t.Error("FAIL:", err)
 					continue
 				}
-				r := xpath.Eval(context)
-				switch v := v.(type) {
+
+				got := xpath.Eval(context)
+				switch expected := expected.(type) {
 				case float64:
-					_, ok := r.(float64)
+					_, ok := got.(float64)
 					if !ok {
-						t.Errorf("FAIL: type mismatch. expected %T, but got %T", v, r)
-					} else if r != v {
-						t.Errorf("FAIL: expected %#v, but got %#v", v, r)
+						t.Errorf("FAIL: type mismatch. expected %T, but got %T", expected, got)
+					} else if got != expected {
+						t.Errorf("FAIL: expected %#v, but got %#v", expected, got)
 					}
 				case string:
-					_, ok := r.(string)
+					_, ok := got.(string)
 					if !ok {
-						t.Errorf("FAIL: type mismatch. expected %T, but got %T", v, r)
-					} else if r != v {
-						t.Errorf("FAIL: expected %#v, but got %#v", v, r)
+						t.Errorf("FAIL: type mismatch. expected %T, but got %T", expected, got)
+					} else if got != expected {
+						t.Errorf("FAIL: expected %#v, but got %#v", expected, got)
 					}
 				case bool:
-					_, ok := r.(bool)
+					_, ok := got.(bool)
 					if !ok {
-						t.Errorf("FAIL: type mismatch. expected %T, but got %T", v, r)
-					} else if r != v {
-						t.Errorf("FAIL: expected %#v, but got %#v", v, r)
+						t.Errorf("FAIL: type mismatch. expected %T, but got %T", expected, got)
+					} else if got != expected {
+						t.Errorf("FAIL: expected %#v, but got %#v", expected, got)
 					}
 				case []interface{}:
-					_, ok := r.([]dom.Node)
+					_, ok := got.([]dom.Node)
 					if !ok {
-						t.Errorf("FAIL: type mismatch. expected []dom.Node, but got %T", r)
+						t.Errorf("FAIL: type mismatch. expected []dom.Node, but got %T", got)
 					}
 					var nodeset []string
-					for _, node := range r.([]dom.Node) {
-						nodeset = append(nodeset, getXPath(node, ns))
+					for _, node := range got.([]dom.Node) {
+						nodeset = append(nodeset, getXPath(node, uri2prefix))
 					}
 					log := false
-					if len(nodeset) != len(v) {
-						t.Errorf("FAIL: expected %d nodes, but got %d nodes", len(v), len(nodeset))
+					if len(nodeset) != len(expected) {
+						t.Errorf("FAIL: expected %d nodes, but got %d nodes", len(expected), len(nodeset))
 						log = true
 					} else {
-						for i, xpath := range v {
+						for i, xpath := range expected {
 							if xpath != nodeset[i] {
 								t.Errorf("FAIL: node at %d does not match", i)
 								log = true
@@ -107,7 +120,7 @@ func TestEval(t *testing.T) {
 					}
 					if log {
 						t.Log("Expected:")
-						for i, s := range v {
+						for i, s := range expected {
 							t.Logf("  %2d: %v\n", i, s)
 						}
 						t.Log("Got:")
@@ -168,23 +181,10 @@ func getContext(d *dom.Document, s string) dom.Node {
 	return n
 }
 
-func getXPath(n dom.Node, ns map[string]string) string {
+func getXPath(n dom.Node, uri2prefix map[string]string) string {
 	if _, ok := n.(*dom.Document); ok {
 		return "/"
 	}
-
-	reverse := make(map[string]string)
-	for prefix, uri := range ns {
-		curPrefix, ok := reverse[uri]
-		if ok {
-			if prefix < curPrefix {
-				reverse[uri] = prefix
-			}
-		} else {
-			reverse[uri] = prefix
-		}
-	}
-	ns = reverse
 
 	var arr []string
 	for {
@@ -203,9 +203,9 @@ func getXPath(n dom.Node, ns map[string]string) string {
 					}
 				}
 			}
-			arr = append(arr, fmt.Sprintf("%s[%d]", qname(x.Name, ns), pos))
+			arr = append(arr, fmt.Sprintf("%s[%d]", qname(x.Name, uri2prefix), pos))
 		case *dom.Attr:
-			arr = append(arr, qname(x.Name, ns))
+			arr = append(arr, qname(x.Name, uri2prefix))
 		case *dom.Text:
 			pos := 0
 			for _, c := range x.Parent().Children() {
@@ -246,8 +246,11 @@ func getXPath(n dom.Node, ns map[string]string) string {
 	return xpath
 }
 
-func qname(name *dom.Name, ns map[string]string) string {
-	prefix, ok := ns[name.URI]
+func qname(name *dom.Name, uri2prefix map[string]string) string {
+	if name.URI == "" {
+		return name.Local
+	}
+	prefix, ok := uri2prefix[name.URI]
 	if !ok {
 		panic(fmt.Sprintf("no prefix bound for %q", name.URI))
 	}
