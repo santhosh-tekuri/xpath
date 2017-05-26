@@ -262,7 +262,9 @@
         "//servlet": [
           "/web-app[1]/servlet[1]",
           "/web-app[1]/servlet[2]"
-        ]
+        ],
+        "/web-app/servlet/servlet-name = 'file'": true,
+        "/web-app/servlet/servlet-name = 'snoop'": true
       }
     },
     "/web-app": {

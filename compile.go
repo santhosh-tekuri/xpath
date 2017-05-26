@@ -47,17 +47,21 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				}
 				return &valueEqualityExpr{asString(lhs), asString(rhs), apply}
 			} else {
-				var nodesetExpr, valueExpr expr
+				var nodeSetExpr, valueExpr expr
 				if lhs.resultType() == NodeSet {
-					nodesetExpr, valueExpr = lhs, rhs
+					nodeSetExpr, valueExpr = lhs, rhs
 				} else {
-					valueExpr, nodesetExpr = lhs, rhs
+					valueExpr, nodeSetExpr = lhs, rhs
 				}
 				switch valueExpr.resultType() {
 				case Boolean:
-					return &valueEqualityExpr{valueExpr, asBoolean(nodesetExpr), apply}
+					return &valueEqualityExpr{valueExpr, asBoolean(nodeSetExpr), apply}
+				case String:
+					return &valuesEqualityExpr{nodeSetExpr, valueExpr, node2string, apply}
+				case Number:
+					return &valuesEqualityExpr{nodeSetExpr, valueExpr, node2number, apply}
 				default:
-					panic(fmt.Sprintf("equality of nodeset with %v is not implemented", valueExpr.resultType()))
+					panic("impossible")
 				}
 			}
 			panic(fmt.Sprintf("binaryOp %v for nodeset is not implemented", e.Op))
@@ -214,6 +218,14 @@ func (e booleanVal) eval(ctx dom.Node) interface{} {
 
 /************************************************************************/
 
+func string2number(s string) float64 {
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return math.NaN()
+	}
+	return f
+}
+
 func asNumber(expr expr) expr {
 	if expr.resultType() == Number {
 		return expr
@@ -240,11 +252,7 @@ func (f *numberFunc) eval(ctx dom.Node) interface{} {
 		}
 		return float64(0)
 	case string:
-		f, err := strconv.ParseFloat(r, 64)
-		if err != nil {
-			return math.NaN()
-		}
-		return f
+		return string2number(r)
 	default:
 		panic(fmt.Sprintf("numberFunc(%T) is not implemented", r))
 	}
@@ -286,6 +294,14 @@ func (f *booleanFunc) eval(ctx dom.Node) interface{} {
 }
 
 /************************************************************************/
+
+func node2string(n dom.Node) interface{} {
+	return textContent(n)
+}
+
+func node2number(n dom.Node) interface{} {
+	return string2number(textContent(n))
+}
 
 func textContent(n dom.Node) string {
 	switch n := n.(type) {
@@ -462,6 +478,28 @@ func (e *valueEqualityExpr) eval(ctx dom.Node) interface{} {
 	lhs := e.lhs.eval(ctx)
 	rhs := e.rhs.eval(ctx)
 	return e.apply(lhs, rhs)
+}
+
+type valuesEqualityExpr struct {
+	nodeSetExpr expr
+	valueExpr   expr
+	convert     func(dom.Node) interface{}
+	apply       func(interface{}, interface{}) bool
+}
+
+func (*valuesEqualityExpr) resultType() ResultType {
+	return Boolean
+}
+
+func (e *valuesEqualityExpr) eval(ctx dom.Node) interface{} {
+	value := e.valueExpr.eval(ctx)
+	nodeSet := e.nodeSetExpr.eval(ctx).([]dom.Node)
+	for _, n := range nodeSet {
+		if e.apply(value, e.convert(n)) {
+			return true
+		}
+	}
+	return false
 }
 
 /************************************************************************/
