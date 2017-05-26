@@ -183,7 +183,6 @@ func (iter *descendantIter) next() dom.Node {
 	return n
 }
 
-
 func parent(n dom.Node) dom.Node {
 	switch n := n.(type) {
 	case *dom.Attr:

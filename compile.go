@@ -475,7 +475,12 @@ func (*locationPath) resultType() ResultType {
 }
 
 func (e *locationPath) eval(ctx dom.Node) interface{} {
-	ns := []dom.Node{ctx}
+	var ns []dom.Node
+	if e.abs {
+		ns = []dom.Node{document(ctx)}
+	} else {
+		ns = []dom.Node{ctx}
+	}
 	for _, s := range e.steps {
 		ns = s.eval(ns)
 	}
@@ -513,4 +518,13 @@ func (s *step) eval(ctx []dom.Node) []dom.Node {
 		reverse(r)
 	}
 	return r
+}
+
+func document(n dom.Node) dom.Node {
+	for {
+		if _, ok := n.(*dom.Document); ok {
+			return n
+		}
+		n = parent(n)
+	}
 }

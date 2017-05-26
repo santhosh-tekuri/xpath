@@ -180,6 +180,17 @@ func getXPath(n dom.Node, ns map[string]string) string {
 			arr = append(arr, fmt.Sprintf("%s[%d]", qname(x.Name, ns), pos))
 		case *dom.Attr:
 			arr = append(arr, qname(x.Name, ns))
+		case *dom.Text:
+			pos := 0
+			for _, c := range x.Parent().Children() {
+				if c, ok := c.(*dom.Text); ok {
+					pos++
+					if c == x {
+						break
+					}
+				}
+			}
+			arr = append(arr, fmt.Sprintf("text()[%d]", pos))
 		case *dom.ProcInst:
 			pos := 0
 			for _, c := range x.Parent().Children() {

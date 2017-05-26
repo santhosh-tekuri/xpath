@@ -54,5 +54,28 @@
         "string(//processing-instruction('toast'))": "is tasty"
       }
     }
+  },
+  "pi2.xml": {
+    "contexts": {
+      "/a/c": {
+        "//processing-instruction()": [
+          "/a[1]/processing-instruction(\"toc\")[1]"
+        ],
+        "preceding-sibling::*" : [
+          "/a[1]/b[1]"
+        ],
+        "preceding-sibling::node()": [
+          "/a[1]/text()[1]",
+          "/a[1]/b[1]",
+          "/a[1]/text()[2]",
+          "/a[1]/processing-instruction(\"toc\")[1]",
+          "/a[1]/text()[3]"
+        ],
+        "preceding-sibling::processing-instruction()": [
+          "/a[1]/processing-instruction(\"toc\")[1]"
+        ],
+        "string(preceding-sibling::processing-instruction())": "order-by=\"x\""
+      }
+    }
   }
 }
