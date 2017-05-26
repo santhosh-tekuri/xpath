@@ -14,13 +14,13 @@ import (
 	"github.com/santhosh-tekuri/xpath"
 )
 
-func compile(expr xpath.Expr) expr {
+func (c *Compiler) compile(expr xpath.Expr) expr {
 	switch expr := expr.(type) {
 	case xpath.Number:
 		return numberVal(expr)
 	case *xpath.BinaryExpr:
-		lhs := compile(expr.LHS)
-		rhs := compile(expr.RHS)
+		lhs := c.compile(expr.LHS)
+		rhs := c.compile(expr.RHS)
 		switch expr.Op {
 		case xpath.Add:
 			return &addExpr{asNumber(lhs), asNumber(rhs)}
@@ -76,16 +76,20 @@ func compile(expr xpath.Expr) expr {
 			case xpath.PITest:
 				s.test = isProcInst(string(test))
 			case *xpath.NameTest:
+				uri, ok := c.resolvePrefix(test.Prefix)
+				if !ok {
+					panic("unresolved prefix "+test.Prefix)
+				}
 				switch estep.Axis {
 				case xpath.Attribute:
-					if test.Prefix == "" {
-						if test.Local == "*" {
+					if test.Local == "*" {
+						if uri == "" {
 							s.test = alwaysTrue
 						} else {
-							s.test = testAttrName("", test.Local)
+							s.test = testAttrNs(uri)
 						}
 					} else {
-						panic("tests on attribute axis is not implemented")
+						s.test = testAttrName(uri, test.Local)
 					}
 				case xpath.Namespace:
 					if test.Prefix == "" && test.Local == "*" {
@@ -94,14 +98,14 @@ func compile(expr xpath.Expr) expr {
 						panic("tests on namespace axis is not implemented")
 					}
 				default:
-					if test.Prefix == "" {
-						if test.Local == "*" {
+					if test.Local == "*" {
+						if uri == "" {
 							s.test = isElement
 						} else {
-							s.test = testElementName("", test.Local)
+							s.test = testElementNS(uri)
 						}
 					} else {
-						panic("nametest is not implemented yet")
+						s.test = testElementName(uri, test.Local)
 					}
 				}
 			}
@@ -114,7 +118,7 @@ func compile(expr xpath.Expr) expr {
 				if len(expr.Params) == 0 {
 					return &stringFunc{contextExpr{}}
 				} else if len(expr.Params) == 1 {
-					return &stringFunc{compile(expr.Params[0])}
+					return &stringFunc{c.compile(expr.Params[0])}
 				} else {
 					panic("string function with non-zero args is not implemented")
 				}

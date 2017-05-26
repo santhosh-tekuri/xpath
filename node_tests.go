@@ -36,10 +36,28 @@ func isProcInst(name string) func(dom.Node) bool {
 	}
 }
 
+func testElementNS(uri string) func(dom.Node) bool {
+	return func(n dom.Node) bool {
+		if n, ok := n.(*dom.Element); ok {
+			return n.URI == uri
+		}
+		return false
+	}
+}
+
 func testElementName(uri, local string) func(dom.Node) bool {
 	return func(n dom.Node) bool {
 		if n, ok := n.(*dom.Element); ok {
 			return n.URI == uri && n.Local == local
+		}
+		return false
+	}
+}
+
+func testAttrNs(uri string) func(dom.Node) bool {
+	return func(n dom.Node) bool {
+		if n, ok := n.(*dom.Attr); ok {
+			return n.URI == uri
 		}
 		return false
 	}

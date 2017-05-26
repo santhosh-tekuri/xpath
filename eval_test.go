@@ -49,12 +49,13 @@ func TestEval(t *testing.T) {
 			}
 		}
 
+		c := NewCompiler(ns)
 		for k, v := range v["contexts"].(map[string]interface{}) {
 			t.Log(" ", k)
 			context := getContext(doc, k)
 			for k, v := range v.(map[string]interface{}) {
 				t.Log("    ", k)
-				xpath, err := Compile(k)
+				xpath, err := c.Compile(k)
 				if err != nil {
 					t.Error("FAIL:", err)
 					continue
@@ -172,6 +173,19 @@ func getXPath(n dom.Node, ns map[string]string) string {
 		return "/"
 	}
 
+	reverse := make(map[string]string)
+	for prefix, uri := range ns {
+		curPrefix, ok := reverse[uri]
+		if ok {
+			if prefix < curPrefix {
+				reverse[uri] = prefix
+			}
+		} else {
+			reverse[uri] = prefix
+		}
+	}
+	ns = reverse
+
 	var arr []string
 	for {
 		switch x := n.(type) {
@@ -233,13 +247,12 @@ func getXPath(n dom.Node, ns map[string]string) string {
 }
 
 func qname(name *dom.Name, ns map[string]string) string {
-	for prefix, uri := range ns {
-		if uri == name.URI {
-			if prefix == "" {
-				return name.Local
-			}
-			return fmt.Sprintf("%s:%s", prefix, name.Local)
-		}
+	prefix, ok := ns[name.URI]
+	if !ok {
+		panic(fmt.Sprintf("no prefix bound for %q", name.URI))
 	}
-	panic(fmt.Sprintf("no prefix bound for %q", name.URI))
+	if prefix == "" {
+		return name.Local
+	}
+	return fmt.Sprintf("%s:%s", prefix, name.Local)
 }

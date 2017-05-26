@@ -1,7 +1,5 @@
 {
   "numbers.xml": {
-    "namespaces": {},
-    "variables": {},
     "contexts": {
       "/": {
         "(8 * 2 + 1) = 17": true,
@@ -89,6 +87,25 @@
         "parent::foo": [
           "/foo[1]"
         ]
+      }
+    }
+  },
+  "namespaces.xml": {
+    "namespaces": {
+      "foo": "http://fooNamespace/",
+      "voo": "http://fooNamespace/",
+      "bar": "http://barNamespace/",
+      "alias": "http://fooNamespace/"
+    },
+    "contexts": {
+      "/": {
+        "/*": [
+          "/alias:a[1]"
+        ],
+        "string(/foo:a/b/c)": "Hello",
+        "string(/foo:a/foo:d/foo:e)": "Hey",
+        "string(/foo:a/alias:x/alias:y)": "Hey3",
+        "string(/foo:a/foo:x/foo:y)": "Hey3"
       }
     }
   }
