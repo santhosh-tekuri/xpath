@@ -377,5 +377,20 @@
         ]
       }
     }
+  },
+  "axis.xml": {
+    "/root": {
+      "xpaths": {
+        "preceding-sibling::*": []
+      }
+    },
+    "/root/a/a.3": {
+      "xpaths": {
+        "preceding-sibling::*": [
+          "/root[1]/a[1]/a.1[1]",
+          "/root[1]/a[1]/a.2[1]"
+        ]
+      }
+    }
   }
 }
