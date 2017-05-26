@@ -107,6 +107,18 @@
         "alias": "http://fooNamespace/"
       },
       "xpaths": {
+        "/foo:a": [
+          "/alias:a[1]"
+        ],
+        "/foo:a/b": [
+          "/alias:a[1]/b[1]"
+        ],
+        "/voo:a/b/c": [
+          "/alias:a[1]/b[1]/c[1]"
+        ],
+        "/voo:a/bar:f": [
+          "/alias:a[1]/bar:f[1]"
+        ],
         "/*": [
           "/alias:a[1]"
         ],
@@ -330,6 +342,30 @@
           "/comment()[1]",
           "/JavaXML:Book[1]/comment()[1]",
           "/JavaXML:Book[1]/comment()[2]"
+        ]
+      }
+    }
+  },
+  "defaultNamespace.xml": {
+    "/": {
+      "namespaces": {
+        "dummy": "http://dummyNamespace/"
+      },
+      "xpaths": {
+        "/a/b/c": [],
+        "/dummy:a/dummy:b/dummy:c": [
+          "/dummy:a[1]/dummy:b[1]/dummy:c[1]"
+        ]
+      }
+    }
+  },
+  "text.xml": {
+    "/": {
+      "xpaths": {
+        "/foo/bar/text()": [
+          "/foo[1]/bar[1]/text()[1]",
+          "/foo[1]/bar[1]/text()[2]",
+          "/foo[1]/bar[1]/text()[3]"
         ]
       }
     }
