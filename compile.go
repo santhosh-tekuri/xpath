@@ -14,14 +14,16 @@ import (
 	"github.com/santhosh-tekuri/xpath"
 )
 
-func (c *Compiler) compile(expr xpath.Expr) expr {
-	switch expr := expr.(type) {
+func (c *Compiler) compile(e xpath.Expr) expr {
+	switch e := e.(type) {
 	case xpath.Number:
-		return numberVal(expr)
+		return numberVal(e)
+	case xpath.String:
+		return stringVal(e)
 	case *xpath.BinaryExpr:
-		lhs := c.compile(expr.LHS)
-		rhs := c.compile(expr.RHS)
-		switch expr.Op {
+		lhs := c.compile(e.LHS)
+		rhs := c.compile(e.RHS)
+		switch e.Op {
 		case xpath.Add:
 			return &addExpr{asNumber(lhs), asNumber(rhs)}
 		case xpath.Subtract:
@@ -33,8 +35,10 @@ func (c *Compiler) compile(expr xpath.Expr) expr {
 		case xpath.Mod:
 			return &modExpr{asNumber(lhs), asNumber(rhs)}
 		case xpath.EQ, xpath.NEQ:
-			apply := equalityOp[expr.Op]
-			if lhs.resultType() != NodeSet && rhs.resultType() != NodeSet {
+			apply := equalityOp[e.Op]
+			if lhs.resultType() == NodeSet && rhs.resultType() == NodeSet {
+				panic("equalitiy on nodesets is not implemented")
+			} else if lhs.resultType() != NodeSet && rhs.resultType() != NodeSet {
 				if lhs.resultType() == Boolean || rhs.resultType() == Boolean {
 					return &valueEqualityExpr{asBoolean(lhs), asBoolean(rhs), apply}
 				}
@@ -42,21 +46,34 @@ func (c *Compiler) compile(expr xpath.Expr) expr {
 					return &valueEqualityExpr{asNumber(lhs), asNumber(rhs), apply}
 				}
 				return &valueEqualityExpr{asString(lhs), asString(rhs), apply}
+			} else {
+				var nodesetExpr, valueExpr expr
+				if lhs.resultType() == NodeSet {
+					nodesetExpr, valueExpr = lhs, rhs
+				} else {
+					valueExpr, nodesetExpr = lhs, rhs
+				}
+				switch valueExpr.resultType() {
+				case Boolean:
+					return &valueEqualityExpr{valueExpr, asBoolean(nodesetExpr), apply}
+				default:
+					panic(fmt.Sprintf("equality of nodeset with %v is not implemented", valueExpr.resultType()))
+				}
 			}
-			panic(fmt.Sprintf("binaryOp %v for nodeset is not implemented", expr.Op))
+			panic(fmt.Sprintf("binaryOp %v for nodeset is not implemented", e.Op))
 		case xpath.LT, xpath.LTE, xpath.GT, xpath.GTE:
-			apply := relationalOp[expr.Op]
+			apply := relationalOp[e.Op]
 			if lhs.resultType() != NodeSet && rhs.resultType() != NodeSet {
 				return &valueRelationalExpr{asNumber(lhs), asNumber(rhs), apply}
 			}
-			panic(fmt.Sprintf("binaryOp %v for nodeset is not implemented", expr.Op))
+			panic(fmt.Sprintf("binaryOp %v for nodeset is not implemented", e.Op))
 		default:
-			panic(fmt.Sprintf("binaryOp %v is not implemented", expr.Op))
+			panic(fmt.Sprintf("binaryOp %v is not implemented", e.Op))
 		}
 	case *xpath.LocationPath:
 		lp := new(locationPath)
-		lp.abs = expr.Abs
-		for _, estep := range expr.Steps {
+		lp.abs = e.Abs
+		for _, estep := range e.Steps {
 			s := new(step)
 			lp.steps = append(lp.steps, s)
 			s.iter = iterators[estep.Axis]
@@ -78,7 +95,7 @@ func (c *Compiler) compile(expr xpath.Expr) expr {
 			case *xpath.NameTest:
 				uri, ok := c.resolvePrefix(test.Prefix)
 				if !ok {
-					panic("unresolved prefix "+test.Prefix)
+					panic("unresolved prefix " + test.Prefix)
 				}
 				switch estep.Axis {
 				case xpath.Attribute:
@@ -112,24 +129,24 @@ func (c *Compiler) compile(expr xpath.Expr) expr {
 		}
 		return lp
 	case *xpath.FuncCall:
-		if expr.Prefix == "" {
-			switch expr.Name {
+		if e.Prefix == "" {
+			switch e.Name {
 			case "string":
-				if len(expr.Params) == 0 {
+				if len(e.Params) == 0 {
 					return &stringFunc{contextExpr{}}
-				} else if len(expr.Params) == 1 {
-					return &stringFunc{c.compile(expr.Params[0])}
+				} else if len(e.Params) == 1 {
+					return &stringFunc{c.compile(e.Params[0])}
 				} else {
 					panic("string function with non-zero args is not implemented")
 				}
 			default:
-				panic(fmt.Sprintf("function %s is not implemented", expr.Name))
+				panic(fmt.Sprintf("function %s is not implemented", e.Name))
 			}
 		} else {
 			panic("user functions is not implemented")
 		}
 	default:
-		panic(fmt.Sprintf("compile(%T) is not implemented", expr))
+		panic(fmt.Sprintf("compile(%T) is not implemented", e))
 	}
 }
 
@@ -141,6 +158,12 @@ const (
 	Number
 	Boolean
 )
+
+var resultTypeNames = []string{"node-set", "string", "number", "boolean"}
+
+func (r ResultType) String() string {
+	return resultTypeNames[r]
+}
 
 type expr interface {
 	resultType() ResultType
