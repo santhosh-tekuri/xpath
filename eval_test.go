@@ -217,6 +217,17 @@ func getXPath(n dom.Node, uri2prefix map[string]string) string {
 				}
 			}
 			arr = append(arr, fmt.Sprintf("text()[%d]", pos))
+		case *dom.Comment:
+			pos := 0
+			for _, c := range x.Parent().Children() {
+				if c, ok := c.(*dom.Comment); ok {
+					pos++
+					if c == x {
+						break
+					}
+				}
+			}
+			arr = append(arr, fmt.Sprintf("comment()[%d]", pos))
 		case *dom.ProcInst:
 			pos := 0
 			for _, c := range x.Parent().Children() {

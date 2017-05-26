@@ -295,5 +295,43 @@
         "string(/root/_b)": "2"
       }
     }
+  },
+  "contents.xml": {
+    "/": {
+      "namespaces": {
+        "JavaXML": "http://www.oreilly.com/catalog/javaxml/"
+      },
+      "xpaths": {
+        "processing-instruction()": [
+          "/processing-instruction(\"xml-stylesheet\")[1]",
+          "/processing-instruction(\"xml-stylesheet\")[2]",
+          "/processing-instruction(\"cocoon-process\")[1]"
+        ],
+        "/processing-instruction()": [
+          "/processing-instruction(\"xml-stylesheet\")[1]",
+          "/processing-instruction(\"xml-stylesheet\")[2]",
+          "/processing-instruction(\"cocoon-process\")[1]"
+        ],
+        "/comment()": [
+          "/comment()[1]"
+        ],
+        "comment()": [
+          "/comment()[1]"
+        ],
+        "/child::node()/comment()": [
+          "/JavaXML:Book[1]/comment()[1]",
+          "/JavaXML:Book[1]/comment()[2]"
+        ],
+        "/*/comment()": [
+          "/JavaXML:Book[1]/comment()[1]",
+          "/JavaXML:Book[1]/comment()[2]"
+        ],
+        "//comment()": [
+          "/comment()[1]",
+          "/JavaXML:Book[1]/comment()[1]",
+          "/JavaXML:Book[1]/comment()[2]"
+        ]
+      }
+    }
   }
 }
