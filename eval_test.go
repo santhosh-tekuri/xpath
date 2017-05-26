@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/santhosh-tekuri/dom"
@@ -40,8 +39,6 @@ func TestEval(t *testing.T) {
 
 		contexts := contexts.(map[string]interface{})
 		for contextStr, v := range contexts {
-			t.Log(" ", contextStr)
-			context := getContext(doc, contextStr)
 			v := v.(map[string]interface{})
 
 			prefix2uri := make(map[string]string)
@@ -63,6 +60,18 @@ func TestEval(t *testing.T) {
 			}
 
 			compiler := NewCompiler(prefix2uri)
+			t.Log(" ", contextStr)
+			contextExpr, err := compiler.Compile(contextStr)
+			if err != nil {
+				t.Error("FAIL:", err)
+				continue
+			}
+			contextNS := contextExpr.Eval(doc).([]dom.Node)
+			if len(contextNS) != 1 {
+				t.Errorf("FAIL: context resulted %d nodes", len(contextNS))
+			}
+			context := contextNS[0]
+
 			xpaths := v["xpaths"].(map[string]interface{})
 			for xpathStr, expected := range xpaths {
 				t.Log("    ", xpathStr)
@@ -135,50 +144,6 @@ func TestEval(t *testing.T) {
 			}
 		}
 	}
-}
-
-func getContext(d *dom.Document, s string) dom.Node {
-	if s == "/" {
-		return d
-	}
-	var n dom.Node = d
-	for _, tok := range strings.Split(s[1:], "/") {
-		if strings.HasPrefix(tok, "@") {
-			tok = strings.TrimPrefix(tok, "@")
-			colon := strings.IndexByte(tok, ':')
-			if colon == -1 {
-				e, ok := n.(*dom.Element)
-				if !ok {
-					panic("attribute in context on non-element")
-				}
-				n = e.GetAttr("", tok)
-				if n == nil {
-					panic("cannot find attribute mentioned in context")
-				}
-			} else {
-				panic("context with attribute with namespace is not implemented")
-			}
-		} else {
-			colon := strings.IndexByte(tok, ':')
-			if colon == -1 {
-				found := false
-				for _, c := range n.(dom.Parent).Children() {
-					if e, ok := c.(*dom.Element); ok {
-						if e.URI == "" && e.Local == tok {
-							n = e
-							found = true
-						}
-					}
-				}
-				if !found {
-					panic("no element found for " + tok)
-				}
-			} else {
-				panic("context with elem with namespace is not implemented")
-			}
-		}
-	}
-	return n
 }
 
 func getXPath(n dom.Node, uri2prefix map[string]string) string {
