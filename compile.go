@@ -26,16 +26,8 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		lhs := c.compile(e.LHS)
 		rhs := c.compile(e.RHS)
 		switch e.Op {
-		case xpath.Add:
-			return &addExpr{asNumber(lhs), asNumber(rhs)}
-		case xpath.Subtract:
-			return &subtractExpr{asNumber(lhs), asNumber(rhs)}
-		case xpath.Multiply:
-			return &multiplyExpr{asNumber(lhs), asNumber(rhs)}
-		case xpath.Div:
-			return &divExpr{asNumber(lhs), asNumber(rhs)}
-		case xpath.Mod:
-			return &modExpr{asNumber(lhs), asNumber(rhs)}
+		case xpath.Add, xpath.Subtract, xpath.Multiply, xpath.Div, xpath.Mod:
+			return &arithmeticExpr{asNumber(lhs), asNumber(rhs), arithmeticOp[e.Op-xpath.Add]}
 		case xpath.EQ, xpath.NEQ:
 			apply := equalityOp[e.Op]
 			if lhs.resultType() == NodeSet && rhs.resultType() == NodeSet {
@@ -68,7 +60,7 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 			}
 			panic(fmt.Sprintf("binaryOp %v for nodeset is not implemented", e.Op))
 		case xpath.LT, xpath.LTE, xpath.GT, xpath.GTE:
-			apply := relationalOp[e.Op]
+			apply := relationalOp[e.Op-xpath.LT]
 			if lhs.resultType() != NodeSet && rhs.resultType() != NodeSet {
 				return &valueRelationalExpr{asNumber(lhs), asNumber(rhs), apply}
 			}
@@ -427,77 +419,36 @@ func (e *negateExpr) eval(ctx *context) interface{} {
 
 /************************************************************************/
 
-type addExpr struct {
-	lhs expr
-	rhs expr
+var arithmeticOp = []func(float64, float64) float64{
+	func(x, y float64) float64 {
+		return x + y
+	},
+	func(x, y float64) float64 {
+		return x - y
+	},
+	func(x, y float64) float64 {
+		return x * y
+	},
+	func(x, y float64) float64 {
+		return math.Mod(x, y)
+	},
+	func(x, y float64) float64 {
+		return x / y
+	},
 }
 
-func (*addExpr) resultType() DataType {
+type arithmeticExpr struct {
+	lhs   expr
+	rhs   expr
+	apply func(float64, float64) float64
+}
+
+func (*arithmeticExpr) resultType() DataType {
 	return Number
 }
 
-func (e *addExpr) eval(ctx *context) interface{} {
-	return e.lhs.eval(ctx).(float64) + e.rhs.eval(ctx).(float64)
-}
-
-/************************************************************************/
-
-type subtractExpr struct {
-	lhs expr
-	rhs expr
-}
-
-func (*subtractExpr) resultType() DataType {
-	return Number
-}
-
-func (s *subtractExpr) eval(ctx *context) interface{} {
-	return s.lhs.eval(ctx).(float64) - s.rhs.eval(ctx).(float64)
-}
-
-/************************************************************************/
-
-type multiplyExpr struct {
-	lhs expr
-	rhs expr
-}
-
-func (*multiplyExpr) resultType() DataType {
-	return Number
-}
-
-func (m *multiplyExpr) eval(ctx *context) interface{} {
-	return m.lhs.eval(ctx).(float64) * m.rhs.eval(ctx).(float64)
-}
-
-/************************************************************************/
-
-type divExpr struct {
-	lhs expr
-	rhs expr
-}
-
-func (*divExpr) resultType() DataType {
-	return Number
-}
-
-func (d *divExpr) eval(ctx *context) interface{} {
-	return d.lhs.eval(ctx).(float64) / d.rhs.eval(ctx).(float64)
-}
-
-/************************************************************************/
-
-type modExpr struct {
-	lhs expr
-	rhs expr
-}
-
-func (*modExpr) resultType() DataType {
-	return Number
-}
-
-func (m *modExpr) eval(ctx *context) interface{} {
-	return math.Mod(m.lhs.eval(ctx).(float64), m.rhs.eval(ctx).(float64))
+func (e *arithmeticExpr) eval(ctx *context) interface{} {
+	return e.apply(e.lhs.eval(ctx).(float64), e.rhs.eval(ctx).(float64))
 }
 
 /************************************************************************/
@@ -552,7 +503,6 @@ func (e *valuesEqualityExpr) eval(ctx *context) interface{} {
 /************************************************************************/
 
 var relationalOp = []func(float64, float64) bool{
-	nil, nil,
 	func(v1, v2 float64) bool {
 		return v1 < v2
 	},
