@@ -171,6 +171,9 @@
           "/PLAY[1]/ACT[4]",
           "/PLAY[1]/ACT[5]"
         ],
+        "count(descendant::ACT)": 5,
+        "10 + count(descendant::ACT) * 5": 35,
+        "(10 + count(descendant::ACT)) * 5": 75,
         "string(/PLAY/TITLE)": "Much Ado about Nothing",
         "2+2": 4,
         "5 * 4 + 1": 21
@@ -293,7 +296,9 @@
         "string(/web-app/servlet[1]/servlet-name)": "snoop",
         "string(/web-app/servlet[1]/servlet-name/text())": "snoop",
         "string(/web-app/servlet[2]/servlet-name)": "file",
-        "string(/web-app/servlet[2]/servlet-name/text())": "file"
+        "string(/web-app/servlet[2]/servlet-name/text())": "file",
+        "count(/*/servlet)": 2,
+        "count(//servlet)": 2
       }
     },
     "/web-app": {
@@ -597,7 +602,10 @@
           "/Fibonacci_Numbers[1]/fibonacci[8]",
           "/Fibonacci_Numbers[1]/fibonacci[9]"
         ],
-        "string(/*/fibonacci[2])": "1"
+        "string(/*/fibonacci[2])": "1",
+        "count(/*/fibonacci)": 26,
+        "string(/*/fibonacci[ count(/*/fibonacci) ])": "75025",
+        "string(/*/fibonacci[ count(/*/fibonacci) - 1 ])": "46368"
       }
     }
   }

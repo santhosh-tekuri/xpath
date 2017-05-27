@@ -156,6 +156,15 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					panic("wrong number of arguments to function position")
 				}
 				return &position{}
+			case "count":
+				if len(e.Params) != 1 {
+					panic("wrong number of arguments to function count")
+				}
+				ns := c.compile(e.Params[0])
+				if ns.resultType() != NodeSet {
+					panic("count expects node-set as argument")
+				}
+				return &count{ns}
 			default:
 				function, ok := coreFunctions[e.Name]
 				if !ok {
@@ -661,6 +670,20 @@ func (position) resultType() DataType {
 
 func (position) eval(ctx *context) interface{} {
 	return float64(ctx.pos)
+}
+
+/************************************************************************/
+
+type count struct {
+	ns expr
+}
+
+func (count) resultType() DataType {
+	return Number
+}
+
+func (e *count) eval(ctx *context) interface{} {
+	return float64(len(e.ns.eval(ctx).([]dom.Node)))
 }
 
 /************************************************************************/
