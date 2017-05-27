@@ -315,6 +315,21 @@
           "/web-app[1]/servlet[2]"
         ]
       }
+    },
+    "/web-app/servlet[1]": {
+      "xpaths": {
+        "string(servlet-name)": "snoop",
+        "string(servlet-name/text())": "snoop"
+      }
+    },
+    "/web-app/servlet[2]/servlet-name": {
+      "xpaths": {
+        "preceding::*": [
+          "/web-app[1]/servlet[1]",
+          "/web-app[1]/servlet[1]/servlet-name[1]",
+          "/web-app[1]/servlet[1]/servlet-class[1]"
+        ]
+      }
     }
   },
   "underscore.xml": {
