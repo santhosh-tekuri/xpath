@@ -151,6 +151,11 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				} else {
 					panic("string function with non-zero args is not implemented")
 				}
+			case "position":
+				if len(e.Params) > 0 {
+					panic("wrong number of arguments to function position")
+				}
+				return &position{}
 			default:
 				function, ok := coreFunctions[e.Name]
 				if !ok {

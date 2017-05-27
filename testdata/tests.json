@@ -582,5 +582,23 @@
         "string(url)": "http://c.moreover.com/click/here.pl?x13563273"
       }
     }
+  },
+  "fibo.xml": {
+    "/": {
+      "xpaths": {
+        "/*/fibonacci[position() < 10]": [
+          "/Fibonacci_Numbers[1]/fibonacci[1]",
+          "/Fibonacci_Numbers[1]/fibonacci[2]",
+          "/Fibonacci_Numbers[1]/fibonacci[3]",
+          "/Fibonacci_Numbers[1]/fibonacci[4]",
+          "/Fibonacci_Numbers[1]/fibonacci[5]",
+          "/Fibonacci_Numbers[1]/fibonacci[6]",
+          "/Fibonacci_Numbers[1]/fibonacci[7]",
+          "/Fibonacci_Numbers[1]/fibonacci[8]",
+          "/Fibonacci_Numbers[1]/fibonacci[9]"
+        ],
+        "string(/*/fibonacci[2])": "1"
+      }
+    }
   }
 }
