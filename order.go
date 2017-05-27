@@ -37,12 +37,11 @@ func cmp(n1, n2 dom.Node) int {
 					return -1
 				}
 				return strings.Compare(n1.(*dom.NameSpace).Prefix, n2.(*dom.NameSpace).Prefix)
-			} else {
-				if isNamespace(n2) {
-					return 1
-				}
-				return strings.Compare(n1.(*dom.Attr).Name.String(), n2.(*dom.Attr).Name.String())
 			}
+			if isNamespace(n2) {
+				return 1
+			}
+			return strings.Compare(n1.(*dom.Attr).Name.String(), n2.(*dom.Attr).Name.String())
 		}
 		return cmp(p1, p2)
 	}
