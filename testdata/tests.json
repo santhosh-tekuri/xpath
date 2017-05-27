@@ -493,7 +493,11 @@
           "/Configuration[1]/hostname[2]/val[1]",
           "/Configuration[1]/hostname[2]/attrlist[1]",
           "/Configuration[1]/hostname[2]/attrlist[1]/hostname[1]"
-        ]
+        ],
+        "/Configuration/hostname/attrlist/hostname[. = 'CE-A'] ": [
+          "/Configuration[1]/hostname[1]/attrlist[1]/hostname[1]"
+        ],
+        "count(/Configuration/hostname/attrlist/hostname[. = 'CE-A'] )": 1
       }
     }
   },
@@ -620,6 +624,13 @@
         "string(/*/fibonacci[ count(/*/fibonacci) - 1 ])": "46368",
         "sum(//fibonacci)": 196417,
         "sum(//fibonacci/@index)": 325
+      }
+    }
+  },
+  "message.xml": {
+    "/": {
+      "xpaths": {
+        "string(/message/body/data/items/item[name/text()='parentinfo']/value)": "Pruefgebiete"
       }
     }
   }
