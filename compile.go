@@ -58,7 +58,6 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					panic("impossible")
 				}
 			}
-			panic(fmt.Sprintf("binaryOp %v for nodeset is not implemented", e.Op))
 		case xpath.LT, xpath.LTE, xpath.GT, xpath.GTE:
 			apply := relationalOp[e.Op-xpath.LT]
 			if lhs.resultType() != NodeSet && rhs.resultType() != NodeSet {
@@ -75,9 +74,6 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 			s := new(step)
 			lp.steps = append(lp.steps, s)
 			s.iter = iterators[estep.Axis]
-			if s.iter == nil {
-				panic(fmt.Sprintf("axis %v is not implemented", estep.Axis))
-			}
 			switch estep.Axis {
 			case xpath.Preceding, xpath.PrecedingSibling, xpath.Ancestor, xpath.AncestorOrSelf:
 				s.reverse = true
@@ -597,6 +593,18 @@ func document(n dom.Node) dom.Node {
 		}
 		n = parent(n)
 	}
+}
+
+/************************************************************************/
+
+type position struct{}
+
+func (position) resultType() DataType {
+	return Number
+}
+
+func (position) eval(ctx *context) interface{} {
+	return float64(ctx.pos)
 }
 
 /************************************************************************/
