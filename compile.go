@@ -124,6 +124,16 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					}
 				}
 			}
+			for _, epredicate := range estep.Predicates {
+				predicate := c.compile(epredicate)
+				switch predicate.resultType() {
+				case Number:
+					predicate = &valueEqualityExpr{position{}, predicate, equalityOp[0]}
+				default:
+					predicate = asBoolean(predicate)
+				}
+				s.predicates = append(s.predicates, predicate)
+			}
 		}
 		return lp
 	case *xpath.FuncCall:
@@ -557,13 +567,16 @@ func (e *locationPath) eval(ctx *context) interface{} {
 }
 
 type step struct {
-	iter    func(dom.Node) iterator
-	test    func(dom.Node) bool
-	reverse bool
+	iter       func(dom.Node) iterator
+	test       func(dom.Node) bool
+	predicates []expr
+	reverse    bool
 }
 
 func (s *step) eval(ctx []dom.Node) []dom.Node {
 	var r []dom.Node
+
+	// eval test
 	unique := make(map[dom.Node]struct{})
 	for _, c := range ctx {
 		iter := s.iter(c)
@@ -580,6 +593,21 @@ func (s *step) eval(ctx []dom.Node) []dom.Node {
 			}
 		}
 	}
+
+	// eval predicates
+	for _, predicate := range s.predicates {
+		var pr []dom.Node
+		scontext := &context{nil, 0}
+		for _, n := range r {
+			scontext.node = n
+			scontext.pos++
+			if predicate.eval(scontext).(bool) {
+				pr = append(pr, n)
+			}
+		}
+		r = pr
+	}
+
 	if s.reverse {
 		reverse(r)
 	}

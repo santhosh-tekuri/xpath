@@ -98,7 +98,12 @@
         "preceding-sibling::processing-instruction()": [
           "/a[1]/processing-instruction(\"toc\")[1]"
         ],
-        "string(preceding-sibling::processing-instruction())": "order-by=\"x\""
+        "string(preceding-sibling::processing-instruction())": "order-by=\"x\"",
+        "preceding-sibling::*[1]": [
+          "/a[1]/b[1]"
+        ],
+        "string(preceding-sibling::*[1])": "foo",
+        "string(preceding-sibling::node()[2])": "order-by=\"x\""
       }
     }
   },
@@ -284,7 +289,11 @@
           "/web-app[1]/servlet[2]"
         ],
         "/web-app/servlet/servlet-name = 'file'": true,
-        "/web-app/servlet/servlet-name = 'snoop'": true
+        "/web-app/servlet/servlet-name = 'snoop'": true,
+        "string(/web-app/servlet[1]/servlet-name)": "snoop",
+        "string(/web-app/servlet[1]/servlet-name/text())": "snoop",
+        "string(/web-app/servlet[2]/servlet-name)": "file",
+        "string(/web-app/servlet[2]/servlet-name/text())": "file"
       }
     },
     "/web-app": {
