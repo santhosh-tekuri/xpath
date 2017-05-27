@@ -12,7 +12,7 @@ import (
 )
 
 func reverse(ns []dom.Node) {
-	i, j := 0, len(ns)
+	i, j := 0, len(ns)-1
 	for i < j {
 		ns[i], ns[j] = ns[j], ns[i]
 		i++

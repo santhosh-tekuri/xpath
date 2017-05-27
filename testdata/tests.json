@@ -389,6 +389,10 @@
         "preceding-sibling::*": [
           "/root[1]/a[1]/a.1[1]",
           "/root[1]/a[1]/a.2[1]"
+        ],
+        "preceding::*": [
+          "/root[1]/a[1]/a.1[1]",
+          "/root[1]/a[1]/a.2[1]"
         ]
       }
     }

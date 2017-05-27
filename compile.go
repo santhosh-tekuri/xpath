@@ -86,6 +86,10 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 			if s.iter == nil {
 				panic(fmt.Sprintf("axis %v is not implemented", estep.Axis))
 			}
+			switch estep.Axis {
+			case xpath.Preceding, xpath.PrecedingSibling, xpath.Ancestor, xpath.AncestorOrSelf:
+				s.reverse = true
+			}
 			switch test := estep.NodeTest.(type) {
 			case xpath.NodeType:
 				switch test {

@@ -20,7 +20,7 @@ var iterators = []func(dom.Node) iterator{
 	followingSiblingAxis,
 	precedingSiblingAxis,
 	followingAxis,
-	nil, //precedingAxis,
+	precedingAxis,
 	attributeAxis,
 	namespaceAxis,
 	selfAxis,
@@ -144,24 +144,29 @@ func (iter *attrIter) next() dom.Node {
 
 func precedingSiblingAxis(n dom.Node) iterator {
 	if p := n.Parent(); p != nil {
-		return &precedingSiblingIter{p, 0, n}
+		for i, child := range n.Parent().Children() {
+			if child == n {
+				return &reverseIter{n.Parent().Children(), i - 1}
+			}
+		}
 	}
 	return emptyIter{}
 }
 
-type precedingSiblingIter struct {
-	p dom.Parent
-	i int
-	n dom.Node
+type reverseIter struct {
+	arr []dom.Node
+	i   int
 }
 
-func (iter *precedingSiblingIter) next() dom.Node {
-	if iter.i < len(iter.p.Children()) {
-		n := iter.p.Children()[iter.i]
-		if n != iter.n {
-			iter.i++
-			return n
-		}
+func (iter *reverseIter) hasNext() bool {
+	return iter.i >= 0
+}
+
+func (iter *reverseIter) next() dom.Node {
+	if iter.i >= 0 {
+		n := iter.arr[iter.i]
+		iter.i--
+		return n
 	}
 	return nil
 }
@@ -184,6 +189,7 @@ func (iter *ancestorOrSelfIter) next() dom.Node {
 	if iter.n != nil {
 		n := iter.n
 		iter.n = parent(n)
+		return n
 	}
 	return nil
 }
@@ -260,6 +266,65 @@ func (iter *followingIter) next() dom.Node {
 		iter.currentSibling = descendantOrSelfAxis(sibling)
 	}
 	return n
+}
+
+/************************************************************************/
+
+func precedingAxis(n dom.Node) iterator {
+	return &precedingIter{ancestorOrSelfAxis(n), emptyIter{}, &reverseIter{nil, -1}, nil}
+}
+
+type precedingIter struct {
+	ancestorOrSelf   iterator
+	precedingSibling iterator
+	childrenOrSelf   *reverseIter
+	stack            []*reverseIter
+}
+
+func (iter *precedingIter) next() dom.Node {
+	for {
+		n := iter.childrenOrSelf.next()
+		if n == nil {
+			if len(iter.stack) == 0 {
+				var ps dom.Node
+				for {
+					ps = iter.precedingSibling.next()
+					if ps == nil {
+						as := iter.ancestorOrSelf.next()
+						if as == nil {
+							return nil
+						}
+						iter.precedingSibling = precedingSiblingAxis(as)
+					} else {
+						break
+					}
+				}
+				iter.childrenOrSelf = childrenOrSelfIter(ps)
+			} else {
+				iter.childrenOrSelf = iter.stack[len(iter.stack)-1]
+				iter.stack = iter.stack[:len(iter.stack)-1]
+			}
+			continue
+		}
+		if iter.childrenOrSelf.hasNext() {
+			iter.stack = append(iter.stack, iter.childrenOrSelf)
+			iter.childrenOrSelf = childrenOrSelfIter(n)
+			continue
+		}
+		return n
+	}
+}
+
+func childrenOrSelfIter(n dom.Node) *reverseIter {
+	arr := []dom.Node{n}
+	children := childAxis(n)
+	for {
+		c := children.next()
+		if c == nil {
+			return &reverseIter{arr, len(arr) - 1}
+		}
+		arr = append(arr, c)
+	}
 }
 
 /************************************************************************/
