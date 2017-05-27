@@ -328,6 +328,21 @@
           "/web-app[1]/servlet[1]",
           "/web-app[1]/servlet[1]/servlet-name[1]",
           "/web-app[1]/servlet[1]/servlet-class[1]"
+        ],
+        "following::*": [
+          "/web-app[1]/servlet[2]/servlet-class[1]",
+          "/web-app[1]/servlet[2]/init-param[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/param-name[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/param-value[1]",
+          "/web-app[1]/servlet[2]/init-param[1]/description[1]",
+          "/web-app[1]/servlet-mapping[1]",
+          "/web-app[1]/servlet-mapping[1]/servlet-name[1]",
+          "/web-app[1]/servlet-mapping[1]/url-pattern[1]",
+          "/web-app[1]/distributed[1]",
+          "/web-app[1]/security-role[1]",
+          "/web-app[1]/security-role[1]/role-name[1]",
+          "/web-app[1]/security-role[1]/role-name[2]",
+          "/web-app[1]/security-role[1]/role-name[3]"
         ]
       }
     }
@@ -461,6 +476,18 @@
           "/Configuration[1]/hostname[2]/val[1]",
           "/Configuration[1]/hostname[2]/attrlist[1]",
           "/Configuration[1]/hostname[2]/attrlist[1]/hostname[1]"
+        ]
+      }
+    }
+  },
+  "nitf.xml": {
+    "/": {
+      "xpaths": {
+        "/nitf/head/meta[@name='fake-cycle']": [
+          "/nitf[1]/head[1]/meta[1]"
+        ],
+        "/nitf/head/meta[@content='FAKE']": [
+          "/nitf[1]/head[1]/meta[1]"
         ]
       }
     }
