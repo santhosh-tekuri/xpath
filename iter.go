@@ -8,6 +8,10 @@ import (
 	"github.com/santhosh-tekuri/dom"
 )
 
+type iterator interface {
+	next() dom.Node
+}
+
 var iterators = []func(dom.Node) iterator{
 	childAxis,
 	descendantAxis,
@@ -15,7 +19,7 @@ var iterators = []func(dom.Node) iterator{
 	ancestorAxis,
 	followingSiblingAxis,
 	precedingSiblingAxis,
-	nil, //followingAxis,
+	followingAxis,
 	nil, //precedingAxis,
 	attributeAxis,
 	namespaceAxis,
@@ -23,6 +27,14 @@ var iterators = []func(dom.Node) iterator{
 	descendantOrSelfAxis,
 	ancestorOrSelfAxis,
 }
+
+type emptyIter struct{}
+
+func (emptyIter) next() dom.Node {
+	return nil
+}
+
+/************************************************************************/
 
 func selfAxis(n dom.Node) iterator {
 	return &onceIter{n}
@@ -32,12 +44,20 @@ func parentAxis(n dom.Node) iterator {
 	return &onceIter{parent(n)}
 }
 
-func attributeAxis(n dom.Node) iterator {
-	if e, ok := n.(*dom.Element); ok {
-		return &attrIter{e, 0}
-	}
-	return emptyIter{}
+type onceIter struct {
+	n dom.Node
 }
+
+func (iter *onceIter) next() dom.Node {
+	if iter.n != nil {
+		n := iter.n
+		iter.n = nil
+		return n
+	}
+	return nil
+}
+
+/************************************************************************/
 
 func childAxis(n dom.Node) iterator {
 	if p, ok := n.(dom.Parent); ok {
@@ -55,29 +75,6 @@ func followingSiblingAxis(n dom.Node) iterator {
 		}
 	}
 	return emptyIter{}
-}
-
-func precedingSiblingAxis(n dom.Node) iterator {
-	if p := n.Parent(); p != nil {
-		return &precedingSiblingIter{p, 0, n}
-	}
-	return emptyIter{}
-}
-
-func ancestorAxis(n dom.Node) iterator {
-	return &ancestorOrSelfIter{n.Parent()}
-}
-
-func ancestorOrSelfAxis(n dom.Node) iterator {
-	return &ancestorOrSelfIter{n}
-}
-
-func descendantAxis(n dom.Node) iterator {
-	return &descendantIter{nil, childAxis(n)}
-}
-
-func descendantOrSelfAxis(n dom.Node) iterator {
-	return &descendantIter{nil, selfAxis(n)}
 }
 
 func namespaceAxis(n dom.Node) iterator {
@@ -106,29 +103,6 @@ func namespaceAxis(n dom.Node) iterator {
 	return emptyIter{}
 }
 
-type iterator interface {
-	next() dom.Node
-}
-
-type emptyIter struct{}
-
-func (emptyIter) next() dom.Node {
-	return nil
-}
-
-type onceIter struct {
-	n dom.Node
-}
-
-func (iter *onceIter) next() dom.Node {
-	if iter.n != nil {
-		n := iter.n
-		iter.n = nil
-		return n
-	}
-	return nil
-}
-
 type sliceIter struct {
 	arr []dom.Node
 	i   int
@@ -141,6 +115,38 @@ func (iter *sliceIter) next() dom.Node {
 		return n
 	}
 	return nil
+}
+
+/************************************************************************/
+
+func attributeAxis(n dom.Node) iterator {
+	if e, ok := n.(*dom.Element); ok {
+		return &attrIter{e, 0}
+	}
+	return emptyIter{}
+}
+
+type attrIter struct {
+	e *dom.Element
+	i int
+}
+
+func (iter *attrIter) next() dom.Node {
+	if iter.i < len(iter.e.Attrs) {
+		n := iter.e.Attrs[iter.i]
+		iter.i++
+		return n
+	}
+	return nil
+}
+
+/************************************************************************/
+
+func precedingSiblingAxis(n dom.Node) iterator {
+	if p := n.Parent(); p != nil {
+		return &precedingSiblingIter{p, 0, n}
+	}
+	return emptyIter{}
 }
 
 type precedingSiblingIter struct {
@@ -160,18 +166,14 @@ func (iter *precedingSiblingIter) next() dom.Node {
 	return nil
 }
 
-type attrIter struct {
-	e *dom.Element
-	i int
+/************************************************************************/
+
+func ancestorAxis(n dom.Node) iterator {
+	return &ancestorOrSelfIter{n.Parent()}
 }
 
-func (iter *attrIter) next() dom.Node {
-	if iter.i < len(iter.e.Attrs) {
-		n := iter.e.Attrs[iter.i]
-		iter.i++
-		return n
-	}
-	return nil
+func ancestorOrSelfAxis(n dom.Node) iterator {
+	return &ancestorOrSelfIter{n}
 }
 
 type ancestorOrSelfIter struct {
@@ -184,6 +186,16 @@ func (iter *ancestorOrSelfIter) next() dom.Node {
 		iter.n = parent(n)
 	}
 	return nil
+}
+
+/************************************************************************/
+
+func descendantAxis(n dom.Node) iterator {
+	return &descendantIter{nil, childAxis(n)}
+}
+
+func descendantOrSelfAxis(n dom.Node) iterator {
+	return &descendantIter{nil, selfAxis(n)}
 }
 
 type descendantIter struct {
@@ -208,6 +220,49 @@ func (iter *descendantIter) next() dom.Node {
 	iter.children = childAxis(n)
 	return n
 }
+
+/************************************************************************/
+
+func followingAxis(n dom.Node) iterator {
+	return &followingIter{n, followingSiblingAxis(n), emptyIter{}}
+}
+
+type followingIter struct {
+	contextNode    dom.Node
+	siblings       iterator
+	currentSibling iterator
+}
+
+func (iter *followingIter) next() dom.Node {
+	var n dom.Node
+	for {
+		n = iter.currentSibling.next()
+		if n != nil {
+			break
+		}
+
+		var sibling dom.Node
+		for {
+			sibling = iter.siblings.next()
+			if sibling != nil {
+				break
+			}
+
+			if _, ok := iter.contextNode.(*dom.Document); ok {
+				return nil
+			}
+			iter.contextNode = parent(iter.contextNode)
+			if _, ok := iter.contextNode.(*dom.Document); ok {
+				return nil
+			}
+			iter.siblings = followingSiblingAxis(iter.contextNode)
+		}
+		iter.currentSibling = descendantOrSelfAxis(sibling)
+	}
+	return n
+}
+
+/************************************************************************/
 
 func parent(n dom.Node) dom.Node {
 	switch n := n.(type) {

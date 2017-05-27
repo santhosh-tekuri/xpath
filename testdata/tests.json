@@ -408,5 +408,19 @@
         ]
       }
     }
+  },
+  "jaxen3.xml": {
+    "/": {
+      "xpaths": {
+        "/Configuration/hostname/val/following::*": [
+          "/Configuration[1]/hostname[1]/attrlist[1]",
+          "/Configuration[1]/hostname[1]/attrlist[1]/hostname[1]",
+          "/Configuration[1]/hostname[2]",
+          "/Configuration[1]/hostname[2]/val[1]",
+          "/Configuration[1]/hostname[2]/attrlist[1]",
+          "/Configuration[1]/hostname[2]/attrlist[1]/hostname[1]"
+        ]
+      }
+    }
   }
 }
