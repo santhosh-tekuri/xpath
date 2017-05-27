@@ -173,7 +173,7 @@ func (r ResultType) String() string {
 
 type expr interface {
 	resultType() ResultType
-	eval(ctx dom.Node) interface{}
+	eval(ctx *context) interface{}
 }
 
 type contextExpr struct{}
@@ -182,8 +182,8 @@ func (contextExpr) resultType() ResultType {
 	return NodeSet
 }
 
-func (contextExpr) eval(ctx dom.Node) interface{} {
-	return []dom.Node{ctx}
+func (contextExpr) eval(ctx *context) interface{} {
+	return []dom.Node{ctx.node}
 }
 
 /************************************************************************/
@@ -194,7 +194,7 @@ func (numberVal) resultType() ResultType {
 	return Number
 }
 
-func (e numberVal) eval(ctx dom.Node) interface{} {
+func (e numberVal) eval(ctx *context) interface{} {
 	return float64(e)
 }
 
@@ -204,7 +204,7 @@ func (stringVal) resultType() ResultType {
 	return String
 }
 
-func (e stringVal) eval(ctx dom.Node) interface{} {
+func (e stringVal) eval(ctx *context) interface{} {
 	return string(e)
 }
 
@@ -214,7 +214,7 @@ func (booleanVal) resultType() ResultType {
 	return Boolean
 }
 
-func (e booleanVal) eval(ctx dom.Node) interface{} {
+func (e booleanVal) eval(ctx *context) interface{} {
 	return bool(e)
 }
 
@@ -243,7 +243,7 @@ func (*numberFunc) resultType() ResultType {
 	return Number
 }
 
-func (f *numberFunc) eval(ctx dom.Node) interface{} {
+func (f *numberFunc) eval(ctx *context) interface{} {
 	r := f.arg.eval(ctx)
 	switch r := r.(type) {
 	case float64:
@@ -277,7 +277,7 @@ func (*booleanFunc) resultType() ResultType {
 	return Boolean
 }
 
-func (f *booleanFunc) eval(ctx dom.Node) interface{} {
+func (f *booleanFunc) eval(ctx *context) interface{} {
 	r := f.arg.eval(ctx)
 	switch r := r.(type) {
 	case float64:
@@ -349,7 +349,7 @@ func (*stringFunc) resultType() ResultType {
 	return String
 }
 
-func (f *stringFunc) eval(ctx dom.Node) interface{} {
+func (f *stringFunc) eval(ctx *context) interface{} {
 	r := f.arg.eval(ctx)
 	switch r := r.(type) {
 	case string:
@@ -390,7 +390,7 @@ func (*negateExpr) resultType() ResultType {
 	return Number
 }
 
-func (e *negateExpr) eval(ctx dom.Node) interface{} {
+func (e *negateExpr) eval(ctx *context) interface{} {
 	return -e.num.eval(ctx).(float64)
 }
 
@@ -405,7 +405,7 @@ func (*addExpr) resultType() ResultType {
 	return Number
 }
 
-func (e *addExpr) eval(ctx dom.Node) interface{} {
+func (e *addExpr) eval(ctx *context) interface{} {
 	return e.lhs.eval(ctx).(float64) + e.rhs.eval(ctx).(float64)
 }
 
@@ -420,7 +420,7 @@ func (*subtractExpr) resultType() ResultType {
 	return Number
 }
 
-func (s *subtractExpr) eval(ctx dom.Node) interface{} {
+func (s *subtractExpr) eval(ctx *context) interface{} {
 	return s.lhs.eval(ctx).(float64) - s.rhs.eval(ctx).(float64)
 }
 
@@ -435,7 +435,7 @@ func (*multiplyExpr) resultType() ResultType {
 	return Number
 }
 
-func (m *multiplyExpr) eval(ctx dom.Node) interface{} {
+func (m *multiplyExpr) eval(ctx *context) interface{} {
 	return m.lhs.eval(ctx).(float64) * m.rhs.eval(ctx).(float64)
 }
 
@@ -450,7 +450,7 @@ func (*divExpr) resultType() ResultType {
 	return Number
 }
 
-func (d *divExpr) eval(ctx dom.Node) interface{} {
+func (d *divExpr) eval(ctx *context) interface{} {
 	return d.lhs.eval(ctx).(float64) / d.rhs.eval(ctx).(float64)
 }
 
@@ -465,7 +465,7 @@ func (*modExpr) resultType() ResultType {
 	return Number
 }
 
-func (m *modExpr) eval(ctx dom.Node) interface{} {
+func (m *modExpr) eval(ctx *context) interface{} {
 	return math.Mod(m.lhs.eval(ctx).(float64), m.rhs.eval(ctx).(float64))
 }
 
@@ -490,7 +490,7 @@ func (*valueEqualityExpr) resultType() ResultType {
 	return Boolean
 }
 
-func (e *valueEqualityExpr) eval(ctx dom.Node) interface{} {
+func (e *valueEqualityExpr) eval(ctx *context) interface{} {
 	lhs := e.lhs.eval(ctx)
 	rhs := e.rhs.eval(ctx)
 	return e.apply(lhs, rhs)
@@ -507,7 +507,7 @@ func (*valuesEqualityExpr) resultType() ResultType {
 	return Boolean
 }
 
-func (e *valuesEqualityExpr) eval(ctx dom.Node) interface{} {
+func (e *valuesEqualityExpr) eval(ctx *context) interface{} {
 	value := e.valueExpr.eval(ctx)
 	nodeSet := e.nodeSetExpr.eval(ctx).([]dom.Node)
 	for _, n := range nodeSet {
@@ -546,7 +546,7 @@ func (*valueRelationalExpr) resultType() ResultType {
 	return Boolean
 }
 
-func (e *valueRelationalExpr) eval(ctx dom.Node) interface{} {
+func (e *valueRelationalExpr) eval(ctx *context) interface{} {
 	lhs := e.lhs.eval(ctx)
 	rhs := e.rhs.eval(ctx)
 	return e.apply(lhs.(float64), rhs.(float64))
@@ -563,12 +563,12 @@ func (*locationPath) resultType() ResultType {
 	return NodeSet
 }
 
-func (e *locationPath) eval(ctx dom.Node) interface{} {
+func (e *locationPath) eval(ctx *context) interface{} {
 	var ns []dom.Node
 	if e.abs {
-		ns = []dom.Node{document(ctx)}
+		ns = []dom.Node{document(ctx.node)}
 	} else {
-		ns = []dom.Node{ctx}
+		ns = []dom.Node{ctx.node}
 	}
 	for _, s := range e.steps {
 		ns = s.eval(ns)
