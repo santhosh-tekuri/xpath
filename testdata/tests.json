@@ -552,5 +552,35 @@
         ]
       }
     }
+  },
+  "moreover.xml": {
+    "/": {
+      "xpaths": {
+        "/child::node()": [
+          "/moreovernews[1]"
+        ],
+        "/*": [
+          "/moreovernews[1]"
+        ],
+        "/moreovernews/article[@code='13563275']": [
+          "/moreovernews[1]/article[1]"
+        ]
+      }
+    },
+    "/moreovernews/article[@code='13563275']": {
+      "xpaths": {
+        "string(url)": "http://c.moreover.com/click/here.pl?x13563273"
+      }
+    },
+    "/*/article[@code='13563275']": {
+      "xpaths": {
+        "string(url)": "http://c.moreover.com/click/here.pl?x13563273"
+      }
+    },
+    "//article[@code='13563275']": {
+      "xpaths": {
+        "string(url)": "http://c.moreover.com/click/here.pl?x13563273"
+      }
+    }
   }
 }
