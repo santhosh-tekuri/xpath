@@ -27,7 +27,17 @@
   "simple.xml": {
     "/": {
       "xpaths": {
-        "string()": "abd"
+        "string()": "abd",
+        "translate( '', '', '' )": "",
+        "translate( 'abcd', '', '' )": "abcd",
+        "translate( 'abcd', 'abcd', 'abcd' )": "abcd",
+        "translate( 'abcd', 'dcba', 'dcba' )": "abcd",
+        "translate( 'abcd', 'abcd', 'dcba' )": "dcba",
+        "translate( 'abcd', 'abcd', 'ab' )": "ab",
+        "translate( 'abcd', 'cdab', 'cd' )": "cd",
+        "translate( 'abcd', 'acbd', 'xy' )": "xy",
+        "translate( 'abcd', 'abcdb', 'abcdb' )": "abcd",
+        "translate( 'abcd', 'abcd', 'abcdb' )": "abcd"
       }
     },
     "/root": {
@@ -37,7 +47,11 @@
     },
     "/root/a": {
       "xpaths": {
-        "string()": "a"
+        "string()": "a",
+        "concat( ., /root/b )": "ab",
+        "concat( ../b, . )": "ba",
+        "concat( /root/b, . )": "ba",
+        "concat( /root/c/d, ../b )": "db"
       }
     },
     "/root/c": {

@@ -150,7 +150,34 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					panic("string function with non-zero args is not implemented")
 				}
 			default:
-				panic(fmt.Sprintf("function %s is not implemented", e.Name))
+				function, ok := coreFunctions[e.Name]
+				if !ok {
+					panic(fmt.Sprintf("no such function %s", e.Name))
+				}
+				if !function.canAccept(len(e.Params)) {
+					panic(fmt.Sprintf("wrong number of args to function %s", e.Name))
+				}
+				var args []expr
+				if len(e.Params) > 0 {
+					args = make([]expr, len(e.Params))
+					for i, arg := range e.Params {
+						arg := c.compile(arg)
+						switch function.argType(i) {
+						case String:
+							args[i] = asString(arg)
+						case Number:
+							args[i] = asNumber(arg)
+						case Boolean:
+							args[i] = asBoolean(arg)
+						default:
+							if arg.resultType() != NodeSet {
+								panic(fmt.Sprintf("argument at %d to function %s must be node-set", i, e.Name))
+							}
+							args[i] = arg
+						}
+					}
+				}
+				return &funcCall{args, function.returns, function.impl}
 			}
 		} else {
 			panic("user functions is not implemented")
@@ -160,10 +187,10 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 	}
 }
 
-type ResultType int
+type DataType int
 
 const (
-	NodeSet ResultType = iota
+	NodeSet DataType = iota
 	String
 	Number
 	Boolean
@@ -171,18 +198,18 @@ const (
 
 var resultTypeNames = []string{"node-set", "string", "number", "boolean"}
 
-func (r ResultType) String() string {
+func (r DataType) String() string {
 	return resultTypeNames[r]
 }
 
 type expr interface {
-	resultType() ResultType
+	resultType() DataType
 	eval(ctx *context) interface{}
 }
 
 type contextExpr struct{}
 
-func (contextExpr) resultType() ResultType {
+func (contextExpr) resultType() DataType {
 	return NodeSet
 }
 
@@ -194,7 +221,7 @@ func (contextExpr) eval(ctx *context) interface{} {
 
 type numberVal float64
 
-func (numberVal) resultType() ResultType {
+func (numberVal) resultType() DataType {
 	return Number
 }
 
@@ -204,7 +231,7 @@ func (e numberVal) eval(ctx *context) interface{} {
 
 type stringVal string
 
-func (stringVal) resultType() ResultType {
+func (stringVal) resultType() DataType {
 	return String
 }
 
@@ -214,7 +241,7 @@ func (e stringVal) eval(ctx *context) interface{} {
 
 type booleanVal bool
 
-func (booleanVal) resultType() ResultType {
+func (booleanVal) resultType() DataType {
 	return Boolean
 }
 
@@ -243,7 +270,7 @@ type numberFunc struct {
 	arg expr
 }
 
-func (*numberFunc) resultType() ResultType {
+func (*numberFunc) resultType() DataType {
 	return Number
 }
 
@@ -277,7 +304,7 @@ type booleanFunc struct {
 	arg expr
 }
 
-func (*booleanFunc) resultType() ResultType {
+func (*booleanFunc) resultType() DataType {
 	return Boolean
 }
 
@@ -349,7 +376,7 @@ type stringFunc struct {
 	arg expr
 }
 
-func (*stringFunc) resultType() ResultType {
+func (*stringFunc) resultType() DataType {
 	return String
 }
 
@@ -390,7 +417,7 @@ type negateExpr struct {
 	num expr
 }
 
-func (*negateExpr) resultType() ResultType {
+func (*negateExpr) resultType() DataType {
 	return Number
 }
 
@@ -405,7 +432,7 @@ type addExpr struct {
 	rhs expr
 }
 
-func (*addExpr) resultType() ResultType {
+func (*addExpr) resultType() DataType {
 	return Number
 }
 
@@ -420,7 +447,7 @@ type subtractExpr struct {
 	rhs expr
 }
 
-func (*subtractExpr) resultType() ResultType {
+func (*subtractExpr) resultType() DataType {
 	return Number
 }
 
@@ -435,7 +462,7 @@ type multiplyExpr struct {
 	rhs expr
 }
 
-func (*multiplyExpr) resultType() ResultType {
+func (*multiplyExpr) resultType() DataType {
 	return Number
 }
 
@@ -450,7 +477,7 @@ type divExpr struct {
 	rhs expr
 }
 
-func (*divExpr) resultType() ResultType {
+func (*divExpr) resultType() DataType {
 	return Number
 }
 
@@ -465,7 +492,7 @@ type modExpr struct {
 	rhs expr
 }
 
-func (*modExpr) resultType() ResultType {
+func (*modExpr) resultType() DataType {
 	return Number
 }
 
@@ -490,7 +517,7 @@ type valueEqualityExpr struct {
 	apply func(interface{}, interface{}) bool
 }
 
-func (*valueEqualityExpr) resultType() ResultType {
+func (*valueEqualityExpr) resultType() DataType {
 	return Boolean
 }
 
@@ -507,7 +534,7 @@ type valuesEqualityExpr struct {
 	apply       func(interface{}, interface{}) bool
 }
 
-func (*valuesEqualityExpr) resultType() ResultType {
+func (*valuesEqualityExpr) resultType() DataType {
 	return Boolean
 }
 
@@ -546,7 +573,7 @@ type valueRelationalExpr struct {
 	apply func(float64, float64) bool
 }
 
-func (*valueRelationalExpr) resultType() ResultType {
+func (*valueRelationalExpr) resultType() DataType {
 	return Boolean
 }
 
@@ -563,7 +590,7 @@ type locationPath struct {
 	steps []*step
 }
 
-func (*locationPath) resultType() ResultType {
+func (*locationPath) resultType() DataType {
 	return NodeSet
 }
 
@@ -620,4 +647,24 @@ func document(n dom.Node) dom.Node {
 		}
 		n = parent(n)
 	}
+}
+
+/************************************************************************/
+
+type funcCall struct {
+	args    []expr
+	returns DataType
+	impl    func(ctx *context, args []interface{}) interface{}
+}
+
+func (f *funcCall) resultType() DataType {
+	return f.returns
+}
+
+func (f *funcCall) eval(ctx *context) interface{} {
+	args := make([]interface{}, len(f.args))
+	for i, arg := range f.args {
+		args[i] = arg.eval(ctx)
+	}
+	return f.impl(ctx, args)
 }
