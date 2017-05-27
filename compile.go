@@ -612,37 +612,41 @@ type step struct {
 
 func (s *step) eval(ctx []dom.Node) []dom.Node {
 	var r []dom.Node
-
-	// eval test
 	unique := make(map[dom.Node]struct{})
+
 	for _, c := range ctx {
+		var cr []dom.Node
 		iter := s.iter(c)
+
+		// eval test
 		for {
 			n := iter.next()
 			if n == nil {
 				break
 			}
-			if s.test(n) {
-				if _, ok := unique[n]; !ok {
+			if _, ok := unique[n]; !ok {
+				if s.test(n) {
 					unique[n] = struct{}{}
-					r = append(r, n)
+					cr = append(cr, n)
 				}
 			}
 		}
-	}
 
-	// eval predicates
-	for _, predicate := range s.predicates {
-		var pr []dom.Node
-		scontext := &context{nil, 0}
-		for _, n := range r {
-			scontext.node = n
-			scontext.pos++
-			if predicate.eval(scontext).(bool) {
-				pr = append(pr, n)
+		// eval predicates
+		for _, predicate := range s.predicates {
+			var pr []dom.Node
+			scontext := &context{nil, 0}
+			for _, n := range cr {
+				scontext.node = n
+				scontext.pos++
+				if predicate.eval(scontext).(bool) {
+					pr = append(pr, n)
+				}
 			}
+			cr = pr
 		}
-		r = pr
+
+		r = append(r, cr...)
 	}
 
 	if s.reverse {
