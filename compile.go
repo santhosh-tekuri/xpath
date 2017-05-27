@@ -165,6 +165,15 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					panic("count expects node-set as argument")
 				}
 				return &count{ns}
+			case "sum":
+				if len(e.Params) != 1 {
+					panic("wrong number of arguments to function sum")
+				}
+				ns := c.compile(e.Params[0])
+				if ns.resultType() != NodeSet {
+					panic("sum expects node-set as argument")
+				}
+				return &sum{ns}
 			default:
 				function, ok := coreFunctions[e.Name]
 				if !ok {
@@ -682,12 +691,30 @@ type count struct {
 	ns expr
 }
 
-func (count) resultType() DataType {
+func (*count) resultType() DataType {
 	return Number
 }
 
 func (e *count) eval(ctx *context) interface{} {
 	return float64(len(e.ns.eval(ctx).([]dom.Node)))
+}
+
+/************************************************************************/
+
+type sum struct {
+	ns expr
+}
+
+func (*sum) resultType() DataType {
+	return Number
+}
+
+func (e *sum) eval(ctx *context) interface{} {
+	var r float64
+	for _, n := range e.ns.eval(ctx).([]dom.Node) {
+		r += node2number(n).(float64)
+	}
+	return r
 }
 
 /************************************************************************/

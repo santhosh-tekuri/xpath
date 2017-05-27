@@ -617,7 +617,9 @@
         "string(/*/fibonacci[2])": "1",
         "count(/*/fibonacci)": 26,
         "string(/*/fibonacci[ count(/*/fibonacci) ])": "75025",
-        "string(/*/fibonacci[ count(/*/fibonacci) - 1 ])": "46368"
+        "string(/*/fibonacci[ count(/*/fibonacci) - 1 ])": "46368",
+        "sum(//fibonacci)": 196417,
+        "sum(//fibonacci/@index)": 325
       }
     }
   }
