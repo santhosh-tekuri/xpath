@@ -72,6 +72,15 @@ func testAttrName(uri, local string) func(dom.Node) bool {
 	}
 }
 
+func testNamespaceName(uri, local string) func(dom.Node) bool {
+	return func(n dom.Node) bool {
+		if n, ok := n.(*dom.NameSpace); ok {
+			return uri == "" && n.Prefix == local
+		}
+		return false
+	}
+}
+
 func testName(uri, local string) func(dom.Node) bool {
 	return func(n dom.Node) bool {
 		switch n := n.(type) {

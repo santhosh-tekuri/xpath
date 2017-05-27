@@ -18,7 +18,7 @@ var iterators = []func(dom.Node) iterator{
 	nil, //followingAxis,
 	nil, //precedingAxis,
 	attributeAxis,
-	nil, //namespaceAxis,
+	namespaceAxis,
 	selfAxis,
 	descendantOrSelfAxis,
 	ancestorOrSelfAxis,
@@ -41,7 +41,7 @@ func attributeAxis(n dom.Node) iterator {
 
 func childAxis(n dom.Node) iterator {
 	if p, ok := n.(dom.Parent); ok {
-		return &childIter{p, 0}
+		return &sliceIter{p.Children(), 0}
 	}
 	return emptyIter{}
 }
@@ -50,7 +50,7 @@ func followingSiblingAxis(n dom.Node) iterator {
 	if p := n.Parent(); p != nil {
 		for i, child := range p.Children() {
 			if n == child {
-				return &childIter{p, i + 1}
+				return &sliceIter{p.Children(), i + 1}
 			}
 		}
 	}
@@ -80,6 +80,32 @@ func descendantOrSelfAxis(n dom.Node) iterator {
 	return &descendantIter{nil, selfAxis(n)}
 }
 
+func namespaceAxis(n dom.Node) iterator {
+	if elem, ok := n.(*dom.Element); ok {
+		m := make(map[string]struct{})
+		ns := []dom.Node{
+			&dom.NameSpace{elem, "xml", "http://www.w3.org/XML/1998/namespace"},
+		}
+		e := elem
+		for {
+			for prefix, uri := range e.NSDecl {
+				if _, ok := m[prefix]; !ok {
+					m[prefix] = struct{}{}
+					ns = append(ns, &dom.NameSpace{elem, prefix, uri})
+				}
+			}
+			p := e.Parent()
+			if p, ok := p.(*dom.Element); ok {
+				e = p
+			} else {
+				break
+			}
+		}
+		return &sliceIter{ns, 0}
+	}
+	return emptyIter{}
+}
+
 type iterator interface {
 	next() dom.Node
 }
@@ -103,14 +129,14 @@ func (iter *onceIter) next() dom.Node {
 	return nil
 }
 
-type childIter struct {
-	p dom.Parent
-	i int
+type sliceIter struct {
+	arr []dom.Node
+	i   int
 }
 
-func (iter *childIter) next() dom.Node {
-	if iter.i < len(iter.p.Children()) {
-		n := iter.p.Children()[iter.i]
+func (iter *sliceIter) next() dom.Node {
+	if iter.i < len(iter.arr) {
+		n := iter.arr[iter.i]
 		iter.i++
 		return n
 	}
@@ -188,7 +214,7 @@ func parent(n dom.Node) dom.Node {
 	case *dom.Attr:
 		return n.Owner
 	case *dom.NameSpace:
-		return n.ParentNode
+		return n.Owner
 	default:
 		return n.Parent()
 	}

@@ -118,7 +118,7 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					if test.Prefix == "" && test.Local == "*" {
 						s.test = alwaysTrue
 					} else {
-						panic("tests on namespace axis is not implemented")
+						s.test = testNamespaceName(uri, test.Local)
 					}
 				default:
 					if test.Local == "*" {

@@ -392,5 +392,21 @@
         ]
       }
     }
+  },
+  "testNamespaces.xml": {
+    "/": {
+      "xpaths": {
+        "/Template/namespace::xml/parent::Template": [
+          "/Template[1]"
+        ]
+      }
+    },
+    "/Template/namespace::xml": {
+      "xpaths": {
+        "parent::Template": [
+          "/Template[1]"
+        ]
+      }
+    }
   }
 }
