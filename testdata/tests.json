@@ -488,6 +488,67 @@
         ],
         "/nitf/head/meta[@content='FAKE']": [
           "/nitf[1]/head[1]/meta[1]"
+        ],
+        "/nitf/head/meta[@name and @content]": [
+          "/nitf[1]/head[1]/meta[1]",
+          "/nitf[1]/head[1]/meta[2]",
+          "/nitf[1]/head[1]/meta[3]",
+          "/nitf[1]/head[1]/meta[4]",
+          "/nitf[1]/head[1]/meta[5]",
+          "/nitf[1]/head[1]/meta[6]",
+          "/nitf[1]/head[1]/meta[7]",
+          "/nitf[1]/head[1]/meta[8]"
+        ],
+        "/nitf/head/meta[@name='fake-cycle' and @content='FAKE']": [
+          "/nitf[1]/head[1]/meta[1]"
+        ],
+        "/nitf/head/meta[@name != 'fake-cycle']": [
+          "/nitf[1]/head[1]/meta[2]",
+          "/nitf[1]/head[1]/meta[3]",
+          "/nitf[1]/head[1]/meta[4]",
+          "/nitf[1]/head[1]/meta[5]",
+          "/nitf[1]/head[1]/meta[6]",
+          "/nitf[1]/head[1]/meta[7]",
+          "/nitf[1]/head[1]/meta[8]"
+        ]
+      }
+    },
+    "/nitf/head/docdata": {
+      "xpaths": {
+        "doc-id[@regsrc='FAKE' and @id-string='YYY']": [
+          "/nitf[1]/head[1]/docdata[1]/doc-id[1]"
+        ]
+      }
+    },
+    "/nitf/head": {
+      "xpaths": {
+        "meta[@name='fake-cycle']": [
+          "/nitf[1]/head[1]/meta[1]"
+        ],
+        "meta[@content='FAKE']": [
+          "/nitf[1]/head[1]/meta[1]"
+        ],
+        "meta[@name and @content]": [
+          "/nitf[1]/head[1]/meta[1]",
+          "/nitf[1]/head[1]/meta[2]",
+          "/nitf[1]/head[1]/meta[3]",
+          "/nitf[1]/head[1]/meta[4]",
+          "/nitf[1]/head[1]/meta[5]",
+          "/nitf[1]/head[1]/meta[6]",
+          "/nitf[1]/head[1]/meta[7]",
+          "/nitf[1]/head[1]/meta[8]"
+        ],
+        "meta[@name='fake-cycle' and @content='FAKE']": [
+          "/nitf[1]/head[1]/meta[1]"
+        ],
+        "meta[@name != 'fake-cycle']": [
+          "/nitf[1]/head[1]/meta[2]",
+          "/nitf[1]/head[1]/meta[3]",
+          "/nitf[1]/head[1]/meta[4]",
+          "/nitf[1]/head[1]/meta[5]",
+          "/nitf[1]/head[1]/meta[6]",
+          "/nitf[1]/head[1]/meta[7]",
+          "/nitf[1]/head[1]/meta[8]"
         ]
       }
     }

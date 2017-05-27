@@ -28,6 +28,10 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		switch e.Op {
 		case xpath.Add, xpath.Subtract, xpath.Multiply, xpath.Div, xpath.Mod:
 			return &arithmeticExpr{asNumber(lhs), asNumber(rhs), arithmeticOp[e.Op-xpath.Add]}
+		case xpath.And:
+			return &logicalExpr{asBoolean(lhs), asBoolean(rhs), false}
+		case xpath.Or:
+			return &logicalExpr{asBoolean(lhs), asBoolean(rhs), true}
 		case xpath.EQ, xpath.NEQ:
 			apply := equalityOp[e.Op]
 			if lhs.resultType() == NodeSet && rhs.resultType() == NodeSet {
@@ -537,6 +541,25 @@ func (e *valueRelationalExpr) eval(ctx *context) interface{} {
 	lhs := e.lhs.eval(ctx)
 	rhs := e.rhs.eval(ctx)
 	return e.apply(lhs.(float64), rhs.(float64))
+}
+
+/************************************************************************/
+
+type logicalExpr struct {
+	lhs      expr
+	rhs      expr
+	lhsValue bool
+}
+
+func (*logicalExpr) resultType() DataType {
+	return Boolean
+}
+
+func (e *logicalExpr) eval(ctx *context) interface{} {
+	if e.lhs.eval(ctx) == e.lhsValue {
+		return e.lhsValue
+	}
+	return e.rhs.eval(ctx)
 }
 
 /************************************************************************/
