@@ -179,6 +179,17 @@
         "2+2": 4,
         "5 * 4 + 1": 21
       }
+    },
+    "/PLAY/ACT[2]/SCENE[1]": {
+      "xpaths": {
+        "count(descendant::*)+1": 646,
+        "count(descendant::SPEAKER)+1": 142,
+        "count(ancestor::*)": 2,
+        "count(ancestor::PLAY)": 1,
+        "count(ancestor-or-self::*)": 3,
+        "count(ancestor-or-self::PLAY)": 1,
+        "5+count(ancestor::*)-1": 6
+      }
     }
   },
   "web.xml": {
