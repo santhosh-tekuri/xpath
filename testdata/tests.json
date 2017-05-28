@@ -449,7 +449,9 @@
     "/web-app/servlet[1]": {
       "xpaths": {
         "string(servlet-name)": "snoop",
-        "string(servlet-name/text())": "snoop"
+        "string(servlet-name/text())": "snoop",
+        "ends-with( servlet-class, 'Servlet' )": true,
+        "ends-with( servlet-class, 'S' )": false
       }
     },
     "/web-app/servlet[2]/servlet-name": {

@@ -12,6 +12,8 @@ import (
 
 	"unicode/utf8"
 
+	"strings"
+
 	"github.com/santhosh-tekuri/dom"
 	"github.com/santhosh-tekuri/xpath"
 )
@@ -216,6 +218,11 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					return &normalizeSpace{asString(contextExpr{})}
 				}
 				return &normalizeSpace{args[0]}
+			case "string-length":
+				if len(e.Params) == 0 {
+					return &stringLength{asString(contextExpr{})}
+				}
+				return &stringLength{args[0]}
 			case "substring":
 				if len(e.Params) == 3 {
 					return &substring{args[0], args[1], args[2]}
@@ -229,6 +236,19 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				return &sum{args[0]}
 			case "not":
 				return &not{args[0]}
+			case "starts-with":
+				return &startsWith{args[0], args[1]}
+			case "ends-with":
+				return &endsWith{args[0], args[1]}
+			case "contains":
+				return &contains{args[0], args[1]}
+			case "concat":
+				if len(e.Params) == 2 {
+					return &concat{args}
+				}
+				return &concat{args}
+			case "translate":
+				return &translate{args[0], args[1], args[2]}
 			default:
 				return &funcCall{args, function.returns, function.impl}
 			}
@@ -886,6 +906,129 @@ func isSpace(b byte) bool {
 	default:
 		return false
 	}
+}
+
+/************************************************************************/
+
+type startsWith struct {
+	str    expr
+	prefix expr
+}
+
+func (*startsWith) resultType() DataType {
+	return Boolean
+}
+
+func (e *startsWith) eval(ctx *context) interface{} {
+	return strings.HasPrefix(e.str.eval(ctx).(string), e.prefix.eval(ctx).(string))
+}
+
+/************************************************************************/
+
+type endsWith struct {
+	str    expr
+	prefix expr
+}
+
+func (*endsWith) resultType() DataType {
+	return Boolean
+}
+
+func (e *endsWith) eval(ctx *context) interface{} {
+	return strings.HasSuffix(e.str.eval(ctx).(string), e.prefix.eval(ctx).(string))
+}
+
+/************************************************************************/
+
+type contains struct {
+	str    expr
+	substr expr
+}
+
+func (*contains) resultType() DataType {
+	return Boolean
+}
+
+func (e *contains) eval(ctx *context) interface{} {
+	return strings.Contains(e.str.eval(ctx).(string), e.substr.eval(ctx).(string))
+}
+
+/************************************************************************/
+
+type stringLength struct {
+	str expr
+}
+
+func (*stringLength) resultType() DataType {
+	return Number
+}
+
+func (e *stringLength) eval(ctx *context) interface{} {
+	return float64(utf8.RuneCountInString(e.str.eval(ctx).(string)))
+}
+
+/************************************************************************/
+
+type concat struct {
+	args []expr
+}
+
+func (*concat) resultType() DataType {
+	return String
+}
+
+func (e *concat) eval(ctx *context) interface{} {
+	buf := new(bytes.Buffer)
+	for _, arg := range e.args {
+		buf.WriteString(arg.eval(ctx).(string))
+	}
+	return buf.String()
+}
+
+/************************************************************************/
+
+type translate struct {
+	str  expr
+	from expr
+	to   expr
+}
+
+func (*translate) resultType() DataType {
+	return String
+}
+
+func (e *translate) eval(ctx *context) interface{} {
+	from := []rune(e.from.eval(ctx).(string))
+	to := []rune(e.to.eval(ctx).(string))
+	replace := make(map[rune]rune)
+	remove := make(map[rune]struct{})
+	for i, frune := range from {
+		if _, ok := replace[frune]; ok {
+			continue
+		}
+		if _, ok := remove[frune]; ok {
+			continue
+		}
+		if i < len(to) {
+			replace[frune] = to[i]
+		} else {
+			remove[frune] = struct{}{}
+		}
+	}
+
+	str := e.str.eval(ctx).(string)
+	buf := bytes.NewBuffer(make([]byte, 0, len(str)))
+	for _, r := range str {
+		if _, ok := remove[r]; ok {
+			continue
+		}
+		if v, ok := replace[r]; ok {
+			buf.WriteRune(v)
+		} else {
+			buf.WriteRune(r)
+		}
+	}
+	return buf.String()
 }
 
 /************************************************************************/

@@ -4,12 +4,6 @@
 
 package xpatheng
 
-import (
-	"bytes"
-	"strings"
-	"unicode/utf8"
-)
-
 type function struct {
 	returns   DataType
 	args      []DataType
@@ -38,69 +32,12 @@ var coreFunctions = map[string]*function{
 	"count":           {Number, []DataType{NodeSet}, 1, false, nil},
 	"sum":             {Number, []DataType{NodeSet}, 1, false, nil},
 	"normalize-space": {String, []DataType{String}, 0, false, nil},
-	"starts-with":     {Boolean, []DataType{String, String}, 2, false, startsWith},
-	"ends-with":       {Boolean, []DataType{String, String}, 2, false, endsWith},
-	"contains":        {Boolean, []DataType{String, String}, 2, false, contains},
-	"concat":          {String, []DataType{String, String}, 2, true, concat},
-	"translate":       {String, []DataType{String, String, String}, 3, false, translate},
+	"string-length":   {Number, []DataType{String}, 0, false, nil},
+	"starts-with":     {Boolean, []DataType{String, String}, 2, false, nil},
+	"ends-with":       {Boolean, []DataType{String, String}, 2, false, nil},
+	"contains":        {Boolean, []DataType{String, String}, 2, false, nil},
+	"concat":          {String, []DataType{String, String}, 2, true, nil},
+	"translate":       {String, []DataType{String, String, String}, 3, false, nil},
 	"substring":       {String, []DataType{String, Number, Number}, 2, false, nil},
 	"not":             {Boolean, []DataType{Boolean}, 1, false, nil},
-}
-
-func startsWith(ctx *context, args []interface{}) interface{} {
-	return strings.HasPrefix(args[0].(string), args[1].(string))
-}
-
-func endsWith(ctx *context, args []interface{}) interface{} {
-	return strings.HasSuffix(args[0].(string), args[1].(string))
-}
-
-func contains(ctx *context, args []interface{}) interface{} {
-	return strings.Contains(args[0].(string), args[1].(string))
-}
-
-func stringLength(ctx *context, args []interface{}) interface{} {
-	return utf8.RuneCountInString(args[0].(string))
-}
-
-func concat(ctx *context, args []interface{}) interface{} {
-	buf := new(bytes.Buffer)
-	for _, v := range args {
-		buf.WriteString(v.(string))
-	}
-	return buf.String()
-}
-
-func translate(ctx *context, args []interface{}) interface{} {
-	from := []rune(args[1].(string))
-	to := []rune(args[2].(string))
-	replace := make(map[rune]rune)
-	remove := make(map[rune]struct{})
-	for i, frune := range from {
-		if _, ok := replace[frune]; ok {
-			continue
-		}
-		if _, ok := remove[frune]; ok {
-			continue
-		}
-		if i < len(to) {
-			replace[frune] = to[i]
-		} else {
-			remove[frune] = struct{}{}
-		}
-	}
-
-	str := args[0].(string)
-	buf := bytes.NewBuffer(make([]byte, 0, len(str)))
-	for _, r := range str {
-		if _, ok := remove[r]; ok {
-			continue
-		}
-		if v, ok := replace[r]; ok {
-			buf.WriteRune(v)
-		} else {
-			buf.WriteRune(r)
-		}
-	}
-	return buf.String()
 }
