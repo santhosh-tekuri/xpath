@@ -228,6 +228,10 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					return &substring{args[0], args[1], args[2]}
 				}
 				return &substring{args[0], args[1], nil}
+			case "substring-before":
+				return &substringBefore{args[0], args[1]}
+			case "substring-after":
+				return &substringAfter{args[0], args[1]}
 			case "position":
 				return &position{}
 			case "count":
@@ -713,7 +717,7 @@ func (s *step) eval(ctx []dom.Node) []dom.Node {
 		// eval predicates
 		for _, predicate := range s.predicates {
 			var pr []dom.Node
-			scontext := &context{nil, 0}
+			scontext := &context{nil, 0, 1}
 			for _, n := range cr {
 				scontext.node = n
 				scontext.pos++
@@ -1029,6 +1033,45 @@ func (e *translate) eval(ctx *context) interface{} {
 		}
 	}
 	return buf.String()
+}
+
+/************************************************************************/
+
+type substringBefore struct {
+	str   expr
+	match expr
+}
+
+func (*substringBefore) resultType() DataType {
+	return String
+}
+
+func (e *substringBefore) eval(ctx *context) interface{} {
+	str := e.str.eval(ctx).(string)
+	if i := strings.Index(str, e.match.eval(ctx).(string)); i != -1 {
+		return str[:i]
+	}
+	return ""
+}
+
+/************************************************************************/
+
+type substringAfter struct {
+	str   expr
+	match expr
+}
+
+func (*substringAfter) resultType() DataType {
+	return String
+}
+
+func (e *substringAfter) eval(ctx *context) interface{} {
+	str := e.str.eval(ctx).(string)
+	match := e.match.eval(ctx).(string)
+	if i := strings.Index(str, match); i != -1 {
+		return str[i+len(match):]
+	}
+	return ""
 }
 
 /************************************************************************/

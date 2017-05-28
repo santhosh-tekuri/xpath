@@ -19,7 +19,7 @@ func (x *XPath) String() string {
 }
 
 func (x *XPath) Eval(n dom.Node) interface{} {
-	return x.expr.eval(&context{n, 0})
+	return x.expr.eval(&context{n, 0, 1})
 }
 
 type Compiler struct {
@@ -49,4 +49,5 @@ func (c *Compiler) Compile(str string) (*XPath, error) {
 type context struct {
 	node dom.Node
 	pos  int
+	size int
 }
