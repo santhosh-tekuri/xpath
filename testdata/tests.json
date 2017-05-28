@@ -203,7 +203,23 @@
         "count(ancestor::PLAY)": 1,
         "count(ancestor-or-self::*)": 3,
         "count(ancestor-or-self::PLAY)": 1,
-        "5+count(ancestor::*)-1": 6
+        "5+count(ancestor::*)-1": 6,
+        "/descendant::ACT": [
+          "/PLAY[1]/ACT[1]",
+          "/PLAY[1]/ACT[2]",
+          "/PLAY[1]/ACT[3]",
+          "/PLAY[1]/ACT[4]",
+          "/PLAY[1]/ACT[5]"
+        ],
+        "../../descendant::ACT": [
+          "/PLAY[1]/ACT[1]",
+          "/PLAY[1]/ACT[2]",
+          "/PLAY[1]/ACT[3]",
+          "/PLAY[1]/ACT[4]",
+          "/PLAY[1]/ACT[5]"
+        ],
+        "count(/PLAY/ACT[2]/SCENE[1]/descendant::SPEAKER)": 141,
+        "count(descendant::SPEAKER)": 141
       }
     }
   },
@@ -340,7 +356,32 @@
         ],
         "/web-app/servlet//description/following::*[2][name()='servlet-name']": [
           "/web-app[1]/servlet-mapping[1]/servlet-name[1]"
-        ]
+        ],
+        "name()": "",
+        "name(.)": "",
+        "name(parent::*)": "",
+        "name(/)": "",
+        "name(/.)": "",
+        "name(/self::node())": "",
+        "name(node())": "web-app",
+        "name(/node())": "web-app",
+        "name(/*)": "web-app",
+        "name(/child::*)": "web-app",
+        "name(/child::node())": "web-app",
+        "name(child::node())": "web-app",
+        "name(./*)": "web-app",
+        "name(*)": "web-app"
+      }
+    },
+    "/*": {
+      "xpaths": {
+        "name(..)": "",
+        "name(parent::node())": "",
+        "name(parent::*)": "",
+        "name()": "web-app",
+        "name(.)": "web-app",
+        "name(../*)": "web-app",
+        "name(../child::node())": "web-app"
       }
     },
     "*": {
@@ -490,6 +531,14 @@
     }
   },
   "axis.xml": {
+    "/": {
+      "xpaths": {
+        "name(/root/a/a.3/preceding-sibling::*[1])": "a.2",
+        "name(/root/a/a.3/preceding-sibling::*[2])": "a.1",
+        "name(/root/a/a.3/following-sibling::*[1])": "a.4",
+        "name(/root/a/a.3/following-sibling::*[2])": "a.5"
+      }
+    },
     "/root": {
       "xpaths": {
         "preceding-sibling::*": []
@@ -618,6 +667,11 @@
   "moreover.xml": {
     "/": {
       "xpaths": {
+        "count(/*/article)": 20,
+        "count(//*)": 221,
+        "count(//*[local-name()='article'])": 20,
+        "count(//article)": 20,
+        "count(/*/*[@code])": 20,
         "/child::node()": [
           "/moreovernews[1]"
         ],
