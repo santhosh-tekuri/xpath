@@ -30,18 +30,19 @@ func (f *function) argType(i int) DataType {
 }
 
 var coreFunctions = map[string]*function{
-	"string":        {String, []DataType{NodeSet}, 0, false, nil},
-	"name":          {String, []DataType{NodeSet}, 0, false, nil},
-	"local-name":    {String, []DataType{NodeSet}, 0, false, nil},
-	"namespace-uri": {String, []DataType{NodeSet}, 0, false, nil},
-	"position":      {Number, nil, 0, false, nil},
-	"count":         {Number, []DataType{NodeSet}, 1, false, nil},
-	"sum":           {Number, []DataType{NodeSet}, 1, false, nil},
-	"starts-with":   {Boolean, []DataType{String, String}, 2, false, startsWith},
-	"ends-with":     {Boolean, []DataType{String, String}, 2, false, endsWith},
-	"contains":      {Boolean, []DataType{String, String}, 2, false, contains},
-	"concat":        {String, []DataType{String, String}, 2, true, concat},
-	"translate":     {String, []DataType{String, String, String}, 3, false, translate},
+	"string":          {String, []DataType{NodeSet}, 0, false, nil},
+	"name":            {String, []DataType{NodeSet}, 0, false, nil},
+	"local-name":      {String, []DataType{NodeSet}, 0, false, nil},
+	"namespace-uri":   {String, []DataType{NodeSet}, 0, false, nil},
+	"position":        {Number, nil, 0, false, nil},
+	"count":           {Number, []DataType{NodeSet}, 1, false, nil},
+	"sum":             {Number, []DataType{NodeSet}, 1, false, nil},
+	"normalize-space": {String, []DataType{String}, 0, false, nil},
+	"starts-with":     {Boolean, []DataType{String, String}, 2, false, startsWith},
+	"ends-with":       {Boolean, []DataType{String, String}, 2, false, endsWith},
+	"contains":        {Boolean, []DataType{String, String}, 2, false, contains},
+	"concat":          {String, []DataType{String, String}, 2, true, concat},
+	"translate":       {String, []DataType{String, String, String}, 3, false, translate},
 }
 
 func startsWith(ctx *context, args []interface{}) interface{} {

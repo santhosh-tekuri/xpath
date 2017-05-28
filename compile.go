@@ -173,27 +173,28 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 			case "string":
 				if len(e.Params) == 0 {
 					return &stringFunc{contextExpr{}}
-				} else {
-					return &stringFunc{args[0]}
 				}
+				return &stringFunc{args[0]}
 			case "name":
 				if len(e.Params) == 0 {
 					return &qname{contextExpr{}}
-				} else {
-					return &qname{args[0]}
 				}
+				return &qname{args[0]}
 			case "local-name":
 				if len(e.Params) == 0 {
 					return &localName{contextExpr{}}
-				} else {
-					return &localName{args[0]}
 				}
+				return &localName{args[0]}
 			case "namespace-uri":
 				if len(e.Params) == 0 {
 					return &namespaceURI{contextExpr{}}
-				} else {
-					return &namespaceURI{args[0]}
 				}
+				return &namespaceURI{args[0]}
+			case "normalize-space":
+				if len(e.Params) == 0 {
+					return &normalizeSpace{asString(contextExpr{})}
+				}
+				return &normalizeSpace{args[0]}
 			case "position":
 				return &position{}
 			case "count":
@@ -791,6 +792,51 @@ func (e *qname) eval(ctx *context) interface{} {
 		}
 	}
 	return ""
+}
+
+/************************************************************************/
+
+type normalizeSpace struct {
+	arg expr
+}
+
+func (*normalizeSpace) resultType() DataType {
+	return String
+}
+
+func (e *normalizeSpace) eval(ctx *context) interface{} {
+	buf := []byte(e.arg.eval(ctx).(string))
+	read, write, lastWrite := 0, 0, 0
+	wroteOne := false
+	for read < len(buf) {
+		b := buf[read]
+		if isSpace(b) {
+			if wroteOne {
+				buf[write] = ' '
+				write++
+			}
+			read++
+			for read < len(buf) && isSpace(buf[read]) {
+				read++
+			}
+		} else {
+			buf[write] = buf[read]
+			write++
+			read++
+			wroteOne = true
+			lastWrite = write
+		}
+	}
+	return string(buf[:lastWrite])
+}
+
+func isSpace(b byte) bool {
+	switch b {
+	case ' ', '\t', '\n', '\r':
+		return true
+	default:
+		return false
+	}
 }
 
 /************************************************************************/

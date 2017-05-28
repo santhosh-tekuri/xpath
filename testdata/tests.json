@@ -37,7 +37,12 @@
         "translate( 'abcd', 'cdab', 'cd' )": "cd",
         "translate( 'abcd', 'acbd', 'xy' )": "xy",
         "translate( 'abcd', 'abcdb', 'abcdb' )": "abcd",
-        "translate( 'abcd', 'abcd', 'abcdb' )": "abcd"
+        "translate( 'abcd', 'abcd', 'abcdb' )": "abcd",
+        "normalize-space('    abc    ')": "abc",
+        "normalize-space(' a  b  c  ')": "a b c",
+        "normalize-space(' a \r b \n  c  ')": "a b c",
+        "normalize-space(' ')": "",
+        "normalize-space('')": ""
       }
     },
     "/root": {
@@ -479,7 +484,8 @@
           "/foo[1]/bar[1]/text()[1]",
           "/foo[1]/bar[1]/text()[2]",
           "/foo[1]/bar[1]/text()[3]"
-        ]
+        ],
+        "normalize-space(/foo/bar/text())": "baz"
       }
     }
   },
