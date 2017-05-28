@@ -10,6 +10,8 @@ import (
 	"math"
 	"strconv"
 
+	"unicode/utf8"
+
 	"github.com/santhosh-tekuri/dom"
 	"github.com/santhosh-tekuri/xpath"
 )
@@ -214,6 +216,11 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					return &normalizeSpace{asString(contextExpr{})}
 				}
 				return &normalizeSpace{args[0]}
+			case "substring":
+				if len(e.Params) == 3 {
+					return &substring{args[0], args[1], args[2]}
+				}
+				return &substring{args[0], args[1], nil}
 			case "position":
 				return &position{}
 			case "count":
@@ -879,6 +886,78 @@ func isSpace(b byte) bool {
 	default:
 		return false
 	}
+}
+
+/************************************************************************/
+
+type substring struct {
+	str    expr
+	from   expr
+	length expr
+}
+
+func (*substring) resultType() DataType {
+	return String
+}
+
+func (e *substring) eval(ctx *context) interface{} {
+	str := e.str.eval(ctx).(string)
+	strLength := utf8.RuneCountInString(str)
+	if strLength == 0 {
+		return ""
+	}
+
+	d1 := e.from.eval(ctx).(float64)
+	if math.IsNaN(d1) {
+		return ""
+	}
+	start := round(d1) - 1
+	substrLength := strLength
+	if e.length != nil {
+		d2 := e.length.eval(ctx).(float64)
+		if math.IsInf(d2, +1) {
+			substrLength = math.MaxInt16
+		} else if math.IsInf(d2, -1) {
+			substrLength = math.MinInt16
+		} else if math.IsNaN(d2) {
+			substrLength = 0
+		} else {
+			substrLength = round(d2)
+		}
+	}
+	if substrLength < 0 {
+		return ""
+	}
+	end := start + substrLength
+	if e.length == nil {
+		end = strLength
+	}
+
+	// negative start is treated as 0
+	if start < 0 {
+		start = 0
+	} else if start > strLength {
+		return ""
+	}
+
+	if end > strLength {
+		end = strLength
+	} else if end < start {
+		return ""
+	}
+
+	if strLength == len(str) {
+		return str[start:end]
+	} else {
+		return string([]rune(str)[start:end])
+	}
+}
+
+func round(val float64) int {
+	if val < 0 {
+		return int(val - 0.5)
+	}
+	return int(val + 0.5)
 }
 
 /************************************************************************/
