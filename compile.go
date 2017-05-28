@@ -439,7 +439,7 @@ func (f *stringFunc) eval(ctx *context) interface{} {
 /************************************************************************/
 
 type negateExpr struct {
-	num expr
+	arg expr
 }
 
 func (*negateExpr) resultType() DataType {
@@ -447,7 +447,7 @@ func (*negateExpr) resultType() DataType {
 }
 
 func (e *negateExpr) eval(ctx *context) interface{} {
-	return -e.num.eval(ctx).(float64)
+	return -e.arg.eval(ctx).(float64)
 }
 
 /************************************************************************/
@@ -688,7 +688,7 @@ func (position) eval(ctx *context) interface{} {
 /************************************************************************/
 
 type count struct {
-	ns expr
+	arg expr
 }
 
 func (*count) resultType() DataType {
@@ -696,13 +696,13 @@ func (*count) resultType() DataType {
 }
 
 func (e *count) eval(ctx *context) interface{} {
-	return float64(len(e.ns.eval(ctx).([]dom.Node)))
+	return float64(len(e.arg.eval(ctx).([]dom.Node)))
 }
 
 /************************************************************************/
 
 type sum struct {
-	ns expr
+	arg expr
 }
 
 func (*sum) resultType() DataType {
@@ -711,7 +711,7 @@ func (*sum) resultType() DataType {
 
 func (e *sum) eval(ctx *context) interface{} {
 	var r float64
-	for _, n := range e.ns.eval(ctx).([]dom.Node) {
+	for _, n := range e.arg.eval(ctx).([]dom.Node) {
 		r += node2number(n).(float64)
 	}
 	return r
