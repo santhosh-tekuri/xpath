@@ -183,6 +183,14 @@
         ],
         "string(/*[local-name()='a' and namespace-uri()='http://fooNamespace/']/*[local-name()='x' and namespace-uri()='http://fooNamespace/']/*[local-name()='y' and namespace-uri()='http://fooNamespace/'])": "Hey3"
       }
+    },
+    "/ ": {
+      "namespaces": {
+        "foo": "http://somethingElse/"
+      },
+      "xpaths": {
+        "/foo:a/b/c": []
+      }
     }
   },
   "much_ado.xml": {
@@ -543,6 +551,11 @@
           "/foo[1]/bar[1]/text()[3]"
         ],
         "normalize-space(/foo/bar/text())": "baz"
+      }
+    },
+    "/foo/bar/cheese[1]": {
+      "xpaths": {
+        "concat(./@id,'foo',@id)": "3foo3"
       }
     }
   },
