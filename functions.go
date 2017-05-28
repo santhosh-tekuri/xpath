@@ -30,6 +30,10 @@ func (f *function) argType(i int) DataType {
 }
 
 var coreFunctions = map[string]*function{
+	"string":      {String, []DataType{NodeSet}, 0, false, nil},
+	"position":    {Number, nil, 0, false, nil},
+	"count":       {Number, []DataType{NodeSet}, 1, false, nil},
+	"sum":         {Number, []DataType{NodeSet}, 1, false, nil},
 	"starts-with": {Boolean, []DataType{String, String}, 2, false, startsWith},
 	"ends-with":   {Boolean, []DataType{String, String}, 2, false, endsWith},
 	"contains":    {Boolean, []DataType{String, String}, 2, false, contains},

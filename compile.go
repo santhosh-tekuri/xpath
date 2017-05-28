@@ -142,66 +142,47 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		return lp
 	case *xpath.FuncCall:
 		if e.Prefix == "" {
+			function, ok := coreFunctions[e.Name]
+			if !ok {
+				panic(fmt.Sprintf("no such function %s", e.Name))
+			}
+			if !function.canAccept(len(e.Params)) {
+				panic(fmt.Sprintf("wrong number of args to function %s", e.Name))
+			}
+			var args []expr
+			if len(e.Params) > 0 {
+				args = make([]expr, len(e.Params))
+				for i, arg := range e.Params {
+					arg := c.compile(arg)
+					switch function.argType(i) {
+					case String:
+						args[i] = asString(arg)
+					case Number:
+						args[i] = asNumber(arg)
+					case Boolean:
+						args[i] = asBoolean(arg)
+					default:
+						if arg.resultType() != NodeSet {
+							panic(fmt.Sprintf("argument at %d to function %s must be node-set", i, e.Name))
+						}
+						args[i] = arg
+					}
+				}
+			}
 			switch e.Name {
 			case "string":
 				if len(e.Params) == 0 {
 					return &stringFunc{contextExpr{}}
-				} else if len(e.Params) == 1 {
-					return &stringFunc{c.compile(e.Params[0])}
 				} else {
-					panic("string function with non-zero args is not implemented")
+					return &stringFunc{args[0]}
 				}
 			case "position":
-				if len(e.Params) > 0 {
-					panic("wrong number of arguments to function position")
-				}
 				return &position{}
 			case "count":
-				if len(e.Params) != 1 {
-					panic("wrong number of arguments to function count")
-				}
-				ns := c.compile(e.Params[0])
-				if ns.resultType() != NodeSet {
-					panic("count expects node-set as argument")
-				}
-				return &count{ns}
+				return &count{args[0]}
 			case "sum":
-				if len(e.Params) != 1 {
-					panic("wrong number of arguments to function sum")
-				}
-				ns := c.compile(e.Params[0])
-				if ns.resultType() != NodeSet {
-					panic("sum expects node-set as argument")
-				}
-				return &sum{ns}
+				return &sum{args[0]}
 			default:
-				function, ok := coreFunctions[e.Name]
-				if !ok {
-					panic(fmt.Sprintf("no such function %s", e.Name))
-				}
-				if !function.canAccept(len(e.Params)) {
-					panic(fmt.Sprintf("wrong number of args to function %s", e.Name))
-				}
-				var args []expr
-				if len(e.Params) > 0 {
-					args = make([]expr, len(e.Params))
-					for i, arg := range e.Params {
-						arg := c.compile(arg)
-						switch function.argType(i) {
-						case String:
-							args[i] = asString(arg)
-						case Number:
-							args[i] = asNumber(arg)
-						case Boolean:
-							args[i] = asBoolean(arg)
-						default:
-							if arg.resultType() != NodeSet {
-								panic(fmt.Sprintf("argument at %d to function %s must be node-set", i, e.Name))
-							}
-							args[i] = arg
-						}
-					}
-				}
 				return &funcCall{args, function.returns, function.impl}
 			}
 		} else {
