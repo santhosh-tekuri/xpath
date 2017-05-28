@@ -84,7 +84,7 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 						op = xpath.LT
 					}
 					apply = relationalOp[op-xpath.LT]
-					return &not{&valuesRelationalExpr{asNumber(rhs), lhs, apply}}
+					return &valuesRelationalExpr{asNumber(rhs), lhs, apply}
 				} else {
 					return &valuesRelationalExpr{asNumber(lhs), rhs, apply}
 				}
