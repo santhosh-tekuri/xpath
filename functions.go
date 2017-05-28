@@ -43,6 +43,7 @@ var coreFunctions = map[string]*function{
 	"contains":        {Boolean, []DataType{String, String}, 2, false, contains},
 	"concat":          {String, []DataType{String, String}, 2, true, concat},
 	"translate":       {String, []DataType{String, String, String}, 3, false, translate},
+	"not":             {Boolean, []DataType{Boolean}, 1, false, nil},
 }
 
 func startsWith(ctx *context, args []interface{}) interface{} {

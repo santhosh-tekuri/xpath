@@ -25,6 +25,19 @@
         "'one' < 2": false,
         "1 < 'two'": false
       }
+    },
+    "/numbers/set[1]": {
+      "xpaths": {
+        "*[-3 = .]": [
+          "/numbers[1]/set[1]/nr[6]"
+        ],
+        "54 < *": true,
+        "55 <= *": true,
+        "69 < *": false,
+        "-2 > *": true,
+        "-3 >= *": true,
+        "-4 >= *": false
+      }
     }
   },
   "simple.xml": {

@@ -45,9 +45,9 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				}
 				return &valueEqualityExpr{asString(lhs), asString(rhs), apply}
 			} else {
-				var nodeSetExpr, valueExpr expr
+				var valueExpr, nodeSetExpr expr
 				if lhs.resultType() == NodeSet {
-					nodeSetExpr, valueExpr = lhs, rhs
+					valueExpr, nodeSetExpr = rhs, lhs
 				} else {
 					valueExpr, nodeSetExpr = lhs, rhs
 				}
@@ -69,7 +69,23 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 			} else if lhs.resultType() != NodeSet && rhs.resultType() != NodeSet {
 				return &valueRelationalExpr{asNumber(lhs), asNumber(rhs), apply}
 			} else {
-				panic("relationalOp of nodeset with value is not implemented")
+				if lhs.resultType() == NodeSet {
+					var op xpath.Op
+					switch e.Op {
+					case xpath.LT:
+						op = xpath.GTE
+					case xpath.LTE:
+						op = xpath.GT
+					case xpath.GT:
+						op = xpath.LTE
+					case xpath.GTE:
+						op = xpath.LT
+					}
+					apply = relationalOp[op-xpath.LT]
+					return &not{&valuesRelationalExpr{asNumber(rhs), lhs, apply}}
+				} else {
+					return &valuesRelationalExpr{asNumber(lhs), rhs, apply}
+				}
 			}
 		default:
 			panic(fmt.Sprintf("binaryOp %v is not implemented", e.Op))
@@ -204,6 +220,8 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				return &count{args[0]}
 			case "sum":
 				return &sum{args[0]}
+			case "not":
+				return &not{args[0]}
 			default:
 				return &funcCall{args, function.returns, function.impl}
 			}
@@ -861,6 +879,20 @@ func isSpace(b byte) bool {
 	default:
 		return false
 	}
+}
+
+/************************************************************************/
+
+type not struct {
+	arg expr
+}
+
+func (*not) resultType() DataType {
+	return Boolean
+}
+
+func (e *not) eval(ctx *context) interface{} {
+	return !e.arg.eval(ctx).(bool)
 }
 
 /************************************************************************/
