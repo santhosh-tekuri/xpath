@@ -176,6 +176,24 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				} else {
 					return &stringFunc{args[0]}
 				}
+			case "name":
+				if len(e.Params) == 0 {
+					return &qname{contextExpr{}}
+				} else {
+					return &qname{args[0]}
+				}
+			case "local-name":
+				if len(e.Params) == 0 {
+					return &localName{contextExpr{}}
+				} else {
+					return &localName{args[0]}
+				}
+			case "namespace-uri":
+				if len(e.Params) == 0 {
+					return &namespaceURI{contextExpr{}}
+				} else {
+					return &namespaceURI{args[0]}
+				}
 			case "position":
 				return &position{}
 			case "count":
@@ -696,6 +714,83 @@ func (e *sum) eval(ctx *context) interface{} {
 		r += node2number(n).(float64)
 	}
 	return r
+}
+
+/************************************************************************/
+
+type localName struct {
+	arg expr
+}
+
+func (*localName) resultType() DataType {
+	return String
+}
+
+func (e *localName) eval(ctx *context) interface{} {
+	ns := e.arg.eval(ctx).([]dom.Node)
+	if len(ns) > 0 {
+		switch n := ns[0].(type) {
+		case *dom.Element:
+			return n.Local
+		case *dom.Attr:
+			return n.Local
+		case *dom.ProcInst:
+			return n.Target
+		case *dom.NameSpace:
+			return n.Prefix
+		}
+	}
+	return ""
+}
+
+/************************************************************************/
+
+type namespaceURI struct {
+	arg expr
+}
+
+func (*namespaceURI) resultType() DataType {
+	return String
+}
+
+func (e *namespaceURI) eval(ctx *context) interface{} {
+	ns := e.arg.eval(ctx).([]dom.Node)
+	if len(ns) > 0 {
+		switch n := ns[0].(type) {
+		case *dom.Element:
+			return n.URI
+		case *dom.Attr:
+			return n.URI
+		}
+	}
+	return ""
+}
+
+/************************************************************************/
+
+type qname struct {
+	arg expr
+}
+
+func (*qname) resultType() DataType {
+	return String
+}
+
+func (e *qname) eval(ctx *context) interface{} {
+	ns := e.arg.eval(ctx).([]dom.Node)
+	if len(ns) > 0 {
+		switch n := ns[0].(type) {
+		case *dom.Element:
+			return n.Name.String()
+		case *dom.Attr:
+			return n.Name.String()
+		case *dom.ProcInst:
+			return n.Target
+		case *dom.NameSpace:
+			return n.Prefix
+		}
+	}
+	return ""
 }
 
 /************************************************************************/

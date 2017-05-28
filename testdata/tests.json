@@ -150,7 +150,17 @@
         "string(/foo:a/b/c)": "Hello",
         "string(/foo:a/foo:d/foo:e)": "Hey",
         "string(/foo:a/alias:x/alias:y)": "Hey3",
-        "string(/foo:a/foo:x/foo:y)": "Hey3"
+        "string(/foo:a/foo:x/foo:y)": "Hey3",
+        "/*[namespace-uri()='http://fooNamespace/' and local-name()='a']": [
+          "/alias:a[1]"
+        ],
+        "/*[local-name()='a' and namespace-uri()='http://fooNamespace/']/*[local-name()='x' and namespace-uri()='http://fooNamespace/']": [
+          "/alias:a[1]/alias:x[1]"
+        ],
+        "/*[local-name()='a' and namespace-uri()='http://fooNamespace/']/*[local-name()='x' and namespace-uri()='http://fooNamespace/']/*[local-name()='y' and namespace-uri()='http://fooNamespace/']": [
+          "/alias:a[1]/alias:x[1]/alias:y[1]"
+        ],
+        "string(/*[local-name()='a' and namespace-uri()='http://fooNamespace/']/*[local-name()='x' and namespace-uri()='http://fooNamespace/']/*[local-name()='y' and namespace-uri()='http://fooNamespace/'])": "Hey3"
       }
     }
   },
@@ -310,7 +320,32 @@
         "string(/web-app/servlet[2]/servlet-name)": "file",
         "string(/web-app/servlet[2]/servlet-name/text())": "file",
         "count(/*/servlet)": 2,
-        "count(//servlet)": 2
+        "count(//servlet)": 2,
+        "*": [
+          "/web-app[1]"
+        ],
+        "./*": [
+          "/web-app[1]"
+        ],
+        "//servlet-mapping/preceding::*[1][name()='description']": [
+          "/web-app[1]/servlet[2]/init-param[1]/description[1]"
+        ],
+        "/web-app/servlet//description/following::*[1][name()='servlet-mapping']": [
+          "/web-app[1]/servlet-mapping[1]"
+        ],
+        "/web-app/servlet//description/following::*[2][name()='servlet-name']": [
+          "/web-app[1]/servlet-mapping[1]/servlet-name[1]"
+        ]
+      }
+    },
+    "*": {
+      "xpaths": {
+        "name()": "web-app"
+      }
+    },
+    "./*": {
+      "xpaths": {
+        "name()": "web-app"
       }
     },
     "/web-app": {

@@ -168,9 +168,9 @@ func getXPath(n dom.Node, uri2prefix map[string]string) string {
 					}
 				}
 			}
-			arr = append(arr, fmt.Sprintf("%s[%d]", qname(x.Name, uri2prefix), pos))
+			arr = append(arr, fmt.Sprintf("%s[%d]", getQName(x.Name, uri2prefix), pos))
 		case *dom.Attr:
-			arr = append(arr, "@"+qname(x.Name, uri2prefix))
+			arr = append(arr, "@"+getQName(x.Name, uri2prefix))
 		case *dom.Text:
 			pos := 0
 			for _, c := range x.Parent().Children() {
@@ -222,7 +222,7 @@ func getXPath(n dom.Node, uri2prefix map[string]string) string {
 	return xpath
 }
 
-func qname(name *dom.Name, uri2prefix map[string]string) string {
+func getQName(name *dom.Name, uri2prefix map[string]string) string {
 	if name.URI == "" {
 		return name.Local
 	}
