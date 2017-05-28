@@ -55,19 +55,22 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				case Boolean:
 					return &valueEqualityExpr{valueExpr, asBoolean(nodeSetExpr), apply}
 				case String:
-					return &valuesEqualityExpr{nodeSetExpr, valueExpr, node2string, apply}
+					return &valuesEqualityExpr{valueExpr, nodeSetExpr, node2string, apply}
 				case Number:
-					return &valuesEqualityExpr{nodeSetExpr, valueExpr, node2number, apply}
+					return &valuesEqualityExpr{valueExpr, nodeSetExpr, node2number, apply}
 				default:
 					panic("impossible")
 				}
 			}
 		case xpath.LT, xpath.LTE, xpath.GT, xpath.GTE:
 			apply := relationalOp[e.Op-xpath.LT]
-			if lhs.resultType() != NodeSet && rhs.resultType() != NodeSet {
+			if lhs.resultType() == NodeSet && rhs.resultType() == NodeSet {
+				panic("relationalOp on nodesets is not implemented")
+			} else if lhs.resultType() != NodeSet && rhs.resultType() != NodeSet {
 				return &valueRelationalExpr{asNumber(lhs), asNumber(rhs), apply}
+			} else {
+				panic("relationalOp of nodeset with value is not implemented")
 			}
-			panic(fmt.Sprintf("binaryOp %v for nodeset is not implemented", e.Op))
 		default:
 			panic(fmt.Sprintf("binaryOp %v is not implemented", e.Op))
 		}
@@ -512,8 +515,8 @@ func (e *valueEqualityExpr) eval(ctx *context) interface{} {
 }
 
 type valuesEqualityExpr struct {
-	nodeSetExpr expr
 	valueExpr   expr
+	nodeSetExpr expr
 	convert     func(dom.Node) interface{}
 	apply       func(interface{}, interface{}) bool
 }
@@ -564,6 +567,27 @@ func (e *valueRelationalExpr) eval(ctx *context) interface{} {
 	lhs := e.lhs.eval(ctx)
 	rhs := e.rhs.eval(ctx)
 	return e.apply(lhs.(float64), rhs.(float64))
+}
+
+type valuesRelationalExpr struct {
+	valueExpr   expr
+	nodeSetExpr expr
+	apply       func(float64, float64) bool
+}
+
+func (*valuesRelationalExpr) resultType() DataType {
+	return Boolean
+}
+
+func (e *valuesRelationalExpr) eval(ctx *context) interface{} {
+	value := e.valueExpr.eval(ctx).(float64)
+	nodeSet := e.nodeSetExpr.eval(ctx).([]dom.Node)
+	for _, n := range nodeSet {
+		if e.apply(value, node2number(n).(float64)) {
+			return true
+		}
+	}
+	return false
 }
 
 /************************************************************************/

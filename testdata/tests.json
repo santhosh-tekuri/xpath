@@ -20,7 +20,10 @@
         "/numbers/set/nr = 24": true,
         "/numbers/set/nr/@value = '9999'": true,
         "/numbers/set/nr/@value = 9999.0": true,
-        "/numbers/set/nr/@value = 66": true
+        "/numbers/set/nr/@value = 66": true,
+        "'one' < 'two'": false,
+        "'one' < 2": false,
+        "1 < 'two'": false
       }
     }
   },
