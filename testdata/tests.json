@@ -578,7 +578,17 @@
       "xpaths": {
         "/Template/namespace::xml/parent::Template": [
           "/Template[1]"
-        ]
+        ],
+        "namespace::*": [],
+        "/namespace::*": []
+      }
+    },
+    "/ ": {
+      "namespaces": {
+        "somethingelse": "http://www.xxxx.com/"
+      },
+      "xpaths": {
+        "//namespace::somethingelse": []
       }
     },
     "/Template/namespace::xml": {
