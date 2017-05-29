@@ -138,6 +138,8 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 			for i, arg := range e.Params {
 				arg := c.compile(arg)
 				switch function.argType(i) {
+				case Unknown:
+					args[i] = arg
 				case NodeSet:
 					args[i] = asNodeSet(arg)
 				case String:

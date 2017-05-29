@@ -33,7 +33,8 @@ func (f *Function) argType(i int) DataType {
 }
 
 var coreFunctions = map[string]*Function{
-	"string":           {String, []DataType{NodeSet}, 0, false, nil},
+	"string":           {String, []DataType{Unknown}, 0, false, nil},
+	"boolean":          {Boolean, []DataType{Unknown}, 0, false, nil},
 	"name":             {String, []DataType{NodeSet}, 0, false, nil},
 	"local-name":       {String, []DataType{NodeSet}, 0, false, nil},
 	"namespace-uri":    {String, []DataType{NodeSet}, 0, false, nil},
@@ -51,7 +52,7 @@ var coreFunctions = map[string]*Function{
 	"substring-before": {String, []DataType{String, String}, 2, false, nil},
 	"substring-after":  {String, []DataType{String, String}, 2, false, nil},
 	"true":             {Boolean, nil, 0, false, nil},
-	"false":            {Boolean, nil, 1, false, nil},
+	"false":            {Boolean, nil, 0, false, nil},
 	"not":              {Boolean, []DataType{Boolean}, 1, false, nil},
 	"lang":             {Boolean, []DataType{String}, 1, false, nil},
 }
@@ -63,6 +64,8 @@ func coreFunction(name string, args []expr) expr {
 			return &stringFunc{contextExpr{}}
 		}
 		return &stringFunc{args[0]}
+	case "boolean":
+		return &booleanFunc{args[0]}
 	case "name":
 		if len(args) == 0 {
 			return &qname{contextExpr{}}

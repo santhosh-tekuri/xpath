@@ -1,4 +1,16 @@
 {
+  "note.xml": {
+    "/": {
+      "namespaces": {
+        "xs": "http://www.w3.org/2001/XMLSchema"
+      },
+      "xpaths": {
+        "true()": true,
+        "false()":false,
+        "boolean(/xs:schema/@targetNamespace)": true
+      }
+    }
+  },
   "numbers.xml": {
     "/": {
       "xpaths": {
