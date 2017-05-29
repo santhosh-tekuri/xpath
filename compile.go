@@ -21,6 +21,12 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		return numberVal(e)
 	case xpath.String:
 		return stringVal(e)
+	case *xpath.VarRef:
+		uri, ok := c.resolvePrefix(e.Prefix)
+		if !ok {
+			panic(UnresolvedPrefixError(e.Prefix))
+		}
+		return &variable{ClarkName(uri, e.Local), Unknown}
 	case *xpath.NegateExpr:
 		return &negateExpr{asNumber(c.compile(e.Expr))}
 	case *xpath.BinaryExpr:
@@ -38,7 +44,7 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		case xpath.LT, xpath.LTE, xpath.GT, xpath.GTE:
 			return &relationalExpr{lhs, rhs, relationalOp[e.Op-xpath.LT]}
 		case xpath.Union:
-			return &unionExpr{lhs, rhs}
+			return &unionExpr{asNodeSet(lhs), asNodeSet(rhs)}
 		default:
 			panic(fmt.Sprintf("unknown binaryOp %v", e.Op))
 		}
@@ -115,10 +121,10 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		if e.Prefix == "" {
 			function, ok := coreFunctions[e.Name]
 			if !ok {
-				panic(fmt.Sprintf("no such function %s", e.Name))
+				panic(UnresolvedFunctionError(e.Name))
 			}
 			if !function.canAccept(len(e.Params)) {
-				panic(fmt.Sprintf("wrong number of args to function %s", e.Name))
+				panic(ArgCountError(e.Name))
 			}
 			var args []expr
 			if len(e.Params) > 0 {
@@ -126,6 +132,8 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				for i, arg := range e.Params {
 					arg := c.compile(arg)
 					switch function.argType(i) {
+					case NodeSet:
+						args[i] = asNodeSet(arg)
 					case String:
 						args[i] = asString(arg)
 					case Number:
@@ -133,10 +141,7 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					case Boolean:
 						args[i] = asBoolean(arg)
 					default:
-						if arg.resultType() != NodeSet {
-							panic(fmt.Sprintf("argument at %d to function %s must be node-set", i, e.Name))
-						}
-						args[i] = arg
+						panic(fmt.Sprintf("unexpected arg type %v", function.argType(i)))
 					}
 				}
 			}
@@ -560,7 +565,7 @@ func (e *locationPath) eval(ctx *context) interface{} {
 		ns = []dom.Node{ctx.node}
 	}
 	for _, s := range e.steps {
-		ns = s.eval(ns)
+		ns = s.eval(ns, ctx.vars)
 	}
 	if len(e.steps) > 1 {
 		order(ns)
@@ -575,7 +580,7 @@ type step struct {
 	reverse    bool
 }
 
-func (s *step) eval(ctx []dom.Node) []dom.Node {
+func (s *step) eval(ctx []dom.Node, vars Variables) []dom.Node {
 	var r []dom.Node
 	unique := make(map[dom.Node]struct{})
 
@@ -600,7 +605,7 @@ func (s *step) eval(ctx []dom.Node) []dom.Node {
 		// eval predicates
 		for _, predicate := range s.predicates {
 			var pr []dom.Node
-			scontext := &context{nil, 0, 1}
+			scontext := &context{nil, 0, 1, vars}
 			for _, n := range cr {
 				scontext.node = n
 				scontext.pos++
@@ -1076,6 +1081,39 @@ func (e *lang) eval(ctx *context) interface{} {
 		n = n.Parent()
 	}
 	return false
+}
+
+/************************************************************************/
+
+func asNodeSet(e expr) expr {
+	if v, ok := e.(*variable); ok {
+		v.returns = NodeSet
+	} else if e.resultType() != NodeSet {
+		panic("node-set expected")
+	}
+	return e
+}
+
+type variable struct {
+	name    string
+	returns DataType
+}
+
+func (v *variable) resultType() DataType {
+	return v.returns
+}
+
+func (v *variable) eval(ctx *context) interface{} {
+	r := ctx.vars.eval(v.name)
+	if r == nil {
+		panic(UnresolvedVariableError(v.name))
+	}
+	if v.returns == NodeSet {
+		if _, ok := r.([]dom.Node); !ok {
+			panic(fmt.Sprintf("variable %s must evaluate to node-set", v.name))
+		}
+	}
+	return r
 }
 
 /************************************************************************/

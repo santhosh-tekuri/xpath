@@ -162,6 +162,23 @@
         ]
       }
     },
+    "/ ": {
+      "variables": {
+        "foobar": "foobar",
+        "foo": "foo"
+      },
+      "xpaths": {
+        "$foobar": "foobar",
+        "/foo[@id=$foobar]": [
+          "/foo[1]"
+        ],
+        "/foo[@id='$foobar']": [],
+        "/foo[concat($foo, 'bar')=@id]": [
+          "/foo[1]"
+        ],
+        "CD_Library/artist[@name=$artist]": []
+      }
+    },
     "/foo/@id": {
       "xpaths": {
         "parent::foo": [

@@ -16,7 +16,8 @@ import (
 type DataType int
 
 const (
-	NodeSet DataType = iota
+	Unknown DataType = iota
+	NodeSet
 	String
 	Number
 	Boolean
@@ -147,4 +148,11 @@ func collectText(n dom.Node, buf *bytes.Buffer) {
 			collectText(c, buf)
 		}
 	}
+}
+
+func ClarkName(uri, local string) string {
+	if uri == "" {
+		return local
+	}
+	return fmt.Sprintf("{%s}%s", uri, local)
 }

@@ -12,6 +12,8 @@ import (
 	"os"
 	"testing"
 
+	"strings"
+
 	"github.com/santhosh-tekuri/dom"
 )
 
@@ -38,6 +40,7 @@ func TestEval(t *testing.T) {
 		}
 
 		contexts := contexts.(map[string]interface{})
+	Loop:
 		for contextStr, v := range contexts {
 			v := v.(map[string]interface{})
 
@@ -59,6 +62,27 @@ func TestEval(t *testing.T) {
 				}
 			}
 
+			vars := make(VariableMap)
+			if m, ok := v["variables"]; ok {
+				m := m.(map[string]interface{})
+				for qname, val := range m {
+					colon := strings.IndexByte(qname, ':')
+					var clarkName string
+					if colon == -1 {
+						clarkName = qname
+					} else {
+						prefix := qname[:colon]
+						uri, ok := prefix2uri[prefix]
+						if !ok {
+							t.Errorf("FAIL: unresolved prefix %s", prefix)
+							continue Loop
+						}
+						clarkName = ClarkName(uri, qname[colon+1:])
+					}
+					vars[clarkName] = val
+				}
+			}
+
 			compiler := NewCompiler(prefix2uri)
 			t.Log(" ", contextStr)
 			contextExpr, err := compiler.Compile(contextStr)
@@ -66,7 +90,7 @@ func TestEval(t *testing.T) {
 				t.Error("FAIL:", err)
 				continue
 			}
-			r, err := contextExpr.Eval(doc)
+			r, err := contextExpr.Eval(doc, vars)
 			if err != nil {
 				t.Error("FAIL:", err)
 				continue
@@ -87,7 +111,7 @@ func TestEval(t *testing.T) {
 					continue
 				}
 
-				got, err := xpath.Eval(context)
+				got, err := xpath.Eval(context, vars)
 				if err != nil {
 					t.Error("FAIL:", err)
 					continue
