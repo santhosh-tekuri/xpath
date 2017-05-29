@@ -48,7 +48,15 @@ func (c *Compiler) resolvePrefix(prefix string) (string, bool) {
 	return uri, ok
 }
 
-func (c *Compiler) Compile(str string) (*XPath, error) {
+func (c *Compiler) Compile(str string) (x *XPath, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(runtime.Error); ok {
+				panic(r)
+			}
+			err = r.(error)
+		}
+	}()
 	expr, err := xpath.Parse(str)
 	if err != nil {
 		return nil, err
