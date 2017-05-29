@@ -105,18 +105,11 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 					}
 				}
 			}
-			for _, epredicate := range estep.Predicates {
-				predicate := c.compile(epredicate)
-				switch predicate.resultType() {
-				case Number:
-					predicate = &equalityExpr{position{}, predicate, equalityOp[0]}
-				default:
-					predicate = asBoolean(predicate)
-				}
-				s.predicates = append(s.predicates, predicate)
-			}
+			s.predicates = c.compilePredicates(estep.Predicates)
 		}
 		return lp
+	case *xpath.FilterExpr:
+		return &filterExpr{c.compile(e.Expr), c.compilePredicates(e.Predicates)}
 	case *xpath.FuncCall:
 		if e.Prefix == "" {
 			function, ok := coreFunctions[e.Name]
@@ -221,6 +214,21 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 	default:
 		panic(fmt.Sprintf("compile(%T) is not implemented", e))
 	}
+}
+
+func (c *Compiler) compilePredicates(predicates []xpath.Expr) []expr {
+	var arr []expr
+	for _, p := range predicates {
+		predicate := c.compile(p)
+		switch predicate.resultType() {
+		case Number:
+			predicate = &equalityExpr{position{}, predicate, equalityOp[0]}
+		default:
+			predicate = asBoolean(predicate)
+		}
+		arr = append(arr, predicate)
+	}
+	return arr
 }
 
 type expr interface {
@@ -622,20 +630,7 @@ func (s *step) eval(ctx []dom.Node, vars Variables) []dom.Node {
 			}
 		}
 
-		// eval predicates
-		for _, predicate := range s.predicates {
-			var pr []dom.Node
-			scontext := &context{nil, 0, 1, vars}
-			for _, n := range cr {
-				scontext.node = n
-				scontext.pos++
-				if predicate.eval(scontext).(bool) {
-					pr = append(pr, n)
-				}
-			}
-			cr = pr
-		}
-
+		cr = evalPredicates(s.predicates, cr, vars)
 		r = append(r, cr...)
 	}
 
@@ -645,6 +640,22 @@ func (s *step) eval(ctx []dom.Node, vars Variables) []dom.Node {
 	return r
 }
 
+func evalPredicates(predicates []expr, ns []dom.Node, vars Variables) []dom.Node {
+	for _, predicate := range predicates {
+		var pr []dom.Node
+		scontext := &context{nil, 0, 1, vars}
+		for _, n := range ns {
+			scontext.node = n
+			scontext.pos++
+			if predicate.eval(scontext).(bool) {
+				pr = append(pr, n)
+			}
+		}
+		ns = pr
+	}
+	return ns
+}
+
 func document(n dom.Node) dom.Node {
 	for {
 		if _, ok := n.(*dom.Document); ok {
@@ -652,6 +663,21 @@ func document(n dom.Node) dom.Node {
 		}
 		n = parent(n)
 	}
+}
+
+/************************************************************************/
+
+type filterExpr struct {
+	expr       expr
+	predicates []expr
+}
+
+func (*filterExpr) resultType() DataType {
+	return NodeSet
+}
+
+func (e *filterExpr) eval(ctx *context) interface{} {
+	return evalPredicates(e.predicates, e.expr.eval(ctx).([]dom.Node), ctx.vars)
 }
 
 /************************************************************************/
