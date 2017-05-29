@@ -41,5 +41,8 @@ var coreFunctions = map[string]*function{
 	"substring":        {String, []DataType{String, Number, Number}, 2, false, nil},
 	"substring-before": {String, []DataType{String, String}, 2, false, nil},
 	"substring-after":  {String, []DataType{String, String}, 2, false, nil},
+	"true":             {Boolean, nil, 0, false, nil},
+	"false":            {Boolean, nil, 1, false, nil},
 	"not":              {Boolean, []DataType{Boolean}, 1, false, nil},
+	"lang":             {Boolean, []DataType{String}, 1, false, nil},
 }

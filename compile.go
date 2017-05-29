@@ -234,12 +234,18 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				return &substringAfter{args[0], args[1]}
 			case "position":
 				return &position{}
+			case "true":
+				return booleanVal(true)
+			case "false":
+				return booleanVal(false)
 			case "count":
 				return &count{args[0]}
 			case "sum":
 				return &sum{args[0]}
 			case "not":
 				return &not{args[0]}
+			case "lang":
+				return &lang{args[0]}
 			case "starts-with":
 				return &startsWith{args[0], args[1]}
 			case "ends-with":
@@ -1158,6 +1164,41 @@ func (*not) resultType() DataType {
 
 func (e *not) eval(ctx *context) interface{} {
 	return !e.arg.eval(ctx).(bool)
+}
+
+/************************************************************************/
+
+type lang struct {
+	lang expr
+}
+
+func (*lang) resultType() DataType {
+	return Boolean
+}
+
+func (e *lang) eval(ctx *context) interface{} {
+	lang := e.lang.eval(ctx).(string)
+	n := ctx.node
+	if _, ok := n.(*dom.Element); !ok {
+		n = n.Parent()
+	}
+	for n != nil {
+		if elem, ok := n.(*dom.Element); ok {
+			attr := elem.GetAttr("http://www.w3.org/XML/1998/namespace", "lang")
+			if attr != nil {
+				sublang := attr.Value
+				if strings.EqualFold(sublang, lang) {
+					return true
+				}
+				ll := len(lang)
+				return len(sublang) > ll && sublang[ll] == '-' && strings.EqualFold(sublang[:ll], lang)
+			}
+		} else {
+			break
+		}
+		n = n.Parent()
+	}
+	return false
 }
 
 /************************************************************************/

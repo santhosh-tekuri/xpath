@@ -795,5 +795,28 @@
         "string(/message/body/data/items/item[name/text()='parentinfo']/value)": "Pruefgebiete"
       }
     }
+  },
+  "lang.xml": {
+    "/": {
+      "xpaths": {
+        "/e1/e2[lang('hr')]": [],
+        "/e1/e2/e3[lang('en')]": [
+          "/e1[1]/e2[1]/e3[1]"
+        ],
+        "/e1/e2/e3[lang('en-US')]": [
+          "/e1[1]/e2[1]/e3[1]"
+        ],
+        "/e1/e2/e3[lang('en-GB')]": [],
+        "/e1/e2/e3[lang('hu')]": [
+          "/e1[1]/e2[2]/e3[1]",
+          "/e1[1]/e2[2]/e3[2]"
+        ],
+        "/e1/e2/e3[lang('hu-HU')]": [],
+        "/e1/e2/e3[lang('es')]": [
+          "/e1[1]/e2[2]/e3[3]"
+        ],
+        "/e1/e2/e3[lang('es-BR')]": []
+      }
+    }
   }
 }
