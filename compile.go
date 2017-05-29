@@ -407,7 +407,17 @@ func (e *equalityExpr) eval(ctx *context) interface{} {
 	lhsType, rhsType := typeOf(lhs), typeOf(rhs)
 	switch {
 	case lhsType == NodeSet && rhsType == NodeSet:
-		panic("equality on nodesets is not implemented")
+		lhs, rhs := lhs.([]dom.Node), rhs.([]dom.Node)
+		if len(lhs) > 0 && len(rhs) > 0 {
+			for _, n1 := range lhs {
+				for _, n2 := range rhs {
+					if e.apply(n1, n2) {
+						return true
+					}
+				}
+			}
+		}
+		return false
 	case lhsType != NodeSet && rhsType != NodeSet:
 		switch {
 		case lhsType == Boolean || rhsType == Boolean:
@@ -478,7 +488,17 @@ func (e *relationalExpr) eval(ctx *context) interface{} {
 	lhsType, rhsType := typeOf(lhs), typeOf(rhs)
 	switch {
 	case lhsType == NodeSet && rhsType == NodeSet:
-		panic("relationalOp on nodesets is not implemented")
+		lhs, rhs := lhs.([]dom.Node), rhs.([]dom.Node)
+		if len(lhs) > 0 && len(rhs) > 0 {
+			for _, n1 := range lhs {
+				for _, n2 := range rhs {
+					if e.apply(node2number(n1), node2number(n2)) {
+						return true
+					}
+				}
+			}
+		}
+		return false
 	case lhsType != NodeSet && rhsType != NodeSet:
 		return e.apply(value2Number(lhs), value2Number(rhs))
 	case lhsType == NodeSet:
