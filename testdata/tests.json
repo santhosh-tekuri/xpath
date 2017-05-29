@@ -6,8 +6,123 @@
       },
       "xpaths": {
         "true()": true,
-        "false()":false,
-        "boolean(/xs:schema/@targetNamespace)": true
+        "false()": false,
+        "boolean(/xs:schema/@targetNamespace)": true,
+        "boolean(/xs:schema/@targetNamespace1)": false,
+        "1+2*5 div 2 mod 3": 3,
+        "(1+2)*5": 15,
+        "normalize-space('  santhosh  kumar   ')": "santhosh kumar",
+        "string-length(normalize-space('  santhosh  kumar   '))": 14,
+        "string-length('  santhosh  kumar   ')": 20,
+        "/xs:schema/descendant-or-self::*[1]": [
+          "/xs:schema[1]"
+        ],
+        "/xs:schema/descendant-or-self::*[3]": [
+          "/xs:schema[1]/xs:element[1]/xs:complexType[1]"
+        ],
+        "/descendant::xs:element[2]": [
+          "/xs:schema[1]/xs:element[2]"
+        ],
+        "//xs:element[2]": [
+          "/xs:schema[1]/xs:element[2]",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[2]",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[2]"
+        ],
+        "//xs:element[position()=2]": [
+          "/xs:schema[1]/xs:element[2]",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[2]",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[2]"
+        ],
+        "/xs:schema/@targetNamespace": [
+          "/xs:schema[1]/@targetNamespace"
+        ],
+        "/xs:schema/xs:complexType": [
+          "/xs:schema[1]/xs:complexType[1]"
+        ],
+        "/xs:schema/descendant-or-self::*[4]/@namespace": [],
+        "/xs:schema/xs:element[xs:complexType/@name]/@name": [
+          "/xs:schema[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:element[5]/@name"
+        ],
+        "/xs:schema/xs:element[xs:complexType]/@name": [
+          "/xs:schema[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:element[5]/@name"
+        ],
+        "/xs:schema/xs:element/@name": [
+          "/xs:schema[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[2]/@name",
+          "/xs:schema[1]/xs:element[3]/@name",
+          "/xs:schema[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:element[5]/@name"
+        ],
+        "/xs:schema/xs:complexType/@name": [
+          "/xs:schema[1]/xs:complexType[1]/@name"
+        ],
+        "/xs:schema/*/@name": [
+          "/xs:schema[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[2]/@name",
+          "/xs:schema[1]/xs:element[3]/@name",
+          "/xs:schema[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:element[5]/@name",
+          "/xs:schema[1]/xs:complexType[1]/@name"
+        ],
+        "/xs:schema/xs:*/@name": [
+          "/xs:schema[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[2]/@name",
+          "/xs:schema[1]/xs:element[3]/@name",
+          "/xs:schema[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:element[5]/@name",
+          "/xs:schema[1]/xs:complexType[1]/@name"
+        ],
+        "xs:schema//xs:element/@name": [
+          "/xs:schema[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[2]/@name",
+          "/xs:schema[1]/xs:element[3]/@name",
+          "/xs:schema[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:element[5]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[2]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[3]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[2]/@name"
+        ],
+        "/xs:schema/descendant-or-self::xs:element/@name": [
+          "/xs:schema[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[2]/@name",
+          "/xs:schema[1]/xs:element[3]/@name",
+          "/xs:schema[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:element[5]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[2]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[3]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[2]/@name"
+        ],
+        "/xs:schema/descendant-or-self::xs:schema/@targetNamespace": [
+          "/xs:schema[1]/@targetNamespace"
+        ],
+        "/xs:schema//@name": [
+          "/xs:schema[1]/@name",
+          "/xs:schema[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[1]/xs:complexType[1]/@name",
+          "/xs:schema[1]/xs:element[2]/@name",
+          "/xs:schema[1]/xs:element[3]/@name",
+          "/xs:schema[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:element[4]/xs:complexType[1]/@name",
+          "/xs:schema[1]/xs:element[5]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[2]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[3]/@name",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[4]/@name",
+          "/xs:schema[1]/xs:complexType[1]/@name",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[1]/@name",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[2]/@name"
+        ]
       }
     }
   },
@@ -665,7 +780,7 @@
         "//namespace::somethingelse": []
       }
     },
-    "/Template/Application1" : {
+    "/Template/Application1": {
       "xpaths": {
         "count(namespace::*)": 3,
         "count(/namespace::*)": 0,
