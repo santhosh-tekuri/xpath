@@ -1113,6 +1113,7 @@ func (v *variable) eval(ctx *context) interface{} {
 			panic(fmt.Sprintf("variable %s must evaluate to node-set", v.name))
 		}
 	}
+	typeOf(r)
 	return r
 }
 

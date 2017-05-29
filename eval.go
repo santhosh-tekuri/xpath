@@ -5,10 +5,9 @@
 package xpatheng
 
 import (
-	"runtime"
-
 	"errors"
 	"fmt"
+	"runtime"
 
 	"github.com/santhosh-tekuri/dom"
 	"github.com/santhosh-tekuri/xpath"
@@ -109,4 +108,10 @@ type ArgCountError string
 
 func (e ArgCountError) Error() string {
 	return fmt.Sprintf("wrong number of args to function %s", string(e))
+}
+
+type InvalidValueError interface{}
+
+func (e InvalidValueError) Error() string {
+	return fmt.Sprintf("%T is not valid xpath data-type", interface{}(e))
 }

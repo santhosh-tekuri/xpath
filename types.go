@@ -40,7 +40,7 @@ func typeOf(v interface{}) DataType {
 	case bool:
 		return Boolean
 	}
-	panic(fmt.Sprintf("%T is not valid xpath data-type", v))
+	panic(InvalidValueError(v))
 }
 
 /************************************************************************/
