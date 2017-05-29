@@ -2,7 +2,8 @@
   "note.xml": {
     "/": {
       "namespaces": {
-        "xs": "http://www.w3.org/2001/XMLSchema"
+        "xs": "http://www.w3.org/2001/XMLSchema",
+        "ns": "http://www.w3schools.com"
       },
       "xpaths": {
         "true()": true,
@@ -122,6 +123,70 @@
           "/xs:schema[1]/xs:complexType[1]/@name",
           "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[1]/@name",
           "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[2]/@name"
+        ],
+        "/xs:schema/xs:element | /xs:schema/xs:complexType | //xs:sequence": [
+          "/xs:schema[1]/xs:element[1]",
+          "/xs:schema[1]/xs:element[2]",
+          "/xs:schema[1]/xs:element[2]/ns:complexType[1]/xs:sequence[1]",
+          "/xs:schema[1]/xs:element[3]",
+          "/xs:schema[1]/xs:element[4]",
+          "/xs:schema[1]/xs:element[4]/xs:complexType[1]/xs:sequence[1]",
+          "/xs:schema[1]/xs:element[5]",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]",
+          "/xs:schema[1]/xs:complexType[1]",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]"
+        ],
+        "(/xs:schema/xs:element/*)[3]": [
+          "/xs:schema[1]/xs:element[4]/xs:complexType[1]"
+        ],
+        "((/xs:schema/xs:element/*)[3]/xs:sequence)/*": [
+          "/xs:schema[1]/xs:element[4]/xs:complexType[1]/xs:sequence[1]/xs:element[1]"
+        ],
+        "((/xs:schema/xs:element/*)[3])/*": [
+          "/xs:schema[1]/xs:element[4]/xs:complexType[1]/xs:sequence[1]"
+        ],
+        "(/xs:schema/xs:element/*)[@name][3]": [
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]"
+        ],
+        "(/xs:schema/xs:element)//xs:sequence": [
+          "/xs:schema[1]/xs:element[2]/ns:complexType[1]/xs:sequence[1]",
+          "/xs:schema[1]/xs:element[4]/xs:complexType[1]/xs:sequence[1]",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]"
+        ],
+        "(/xs:schema/xs:element | xs:schema/xs:complexType| //xs:sequence)/*": [
+          "/xs:schema[1]/xs:element[1]/xs:complexType[1]",
+          "/xs:schema[1]/xs:element[2]/ns:complexType[1]",
+          "/xs:schema[1]/xs:element[2]/ns:complexType[1]/xs:sequence[1]/xs:any[1]",
+          "/xs:schema[1]/xs:element[2]/ns:complexType[1]/xs:sequence[1]/xs:any[2]",
+          "/xs:schema[1]/xs:element[2]/ns:complexType[1]/xs:sequence[1]/xs:any[3]",
+          "/xs:schema[1]/xs:element[4]/xs:complexType[1]",
+          "/xs:schema[1]/xs:element[4]/xs:complexType[1]/xs:sequence[1]/xs:element[1]",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[1]",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[2]",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[3]",
+          "/xs:schema[1]/xs:element[5]/xs:complexType[1]/xs:sequence[1]/xs:element[4]",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[1]",
+          "/xs:schema[1]/xs:complexType[1]/xs:sequence[1]/xs:element[2]"
+        ],
+        "count((/xs:schema/xs:element)/*)": 4,
+        "(/xs:schema/xs:element | /xs:schema/xs:complexType)[contains(@name, 'Element')]/*": [
+          "/xs:schema[1]/xs:element[1]/xs:complexType[1]",
+          "/xs:schema[1]/xs:element[2]/ns:complexType[1]",
+          "/xs:schema[1]/xs:element[4]/xs:complexType[1]"
+        ],
+        "(/xs:schema/xs:element | /xs:schema/xs:complexType)[contains(@name, 'Element')]": [
+          "/xs:schema[1]/xs:element[1]",
+          "/xs:schema[1]/xs:element[2]",
+          "/xs:schema[1]/xs:element[3]",
+          "/xs:schema[1]/xs:element[4]"
+        ],
+        "(/xs:schema/xs:element)[contains(@name, 'Element')]": [
+          "/xs:schema[1]/xs:element[1]",
+          "/xs:schema[1]/xs:element[2]",
+          "/xs:schema[1]/xs:element[3]",
+          "/xs:schema[1]/xs:element[4]"
         ]
       }
     }
@@ -254,6 +319,21 @@
     }
   },
   "pi2.xml": {
+    "/": {
+      "variables": {
+        "var1": "world",
+        "var2": 10
+      },
+      "xpaths": {
+        "//processing-instruction()": [
+          "/a[1]/processing-instruction(\"toc\")[1]"
+        ],
+        "concat('hello', $var1)": "helloworld",
+        "concat(/a/b, $var1, /a/c)": "fooworldbar",
+        "20 + $var2": 30,
+        "string(20 div 0)": "Infinity"
+      }
+    },
     "/a/c": {
       "xpaths": {
         "//processing-instruction()": [
@@ -564,7 +644,16 @@
         "name(/child::node())": "web-app",
         "name(child::node())": "web-app",
         "name(./*)": "web-app",
-        "name(*)": "web-app"
+        "name(*)": "web-app",
+        "/web-app/*[last()]": [
+          "/web-app[1]/security-role[1]"
+        ],
+        "/web-app/*[servlet-name][last()]": [
+          "/web-app[1]/servlet-mapping[1]"
+        ],
+        "/web-app/*[servlet-name][last()-1]": [
+          "/web-app[1]/servlet[2]"
+        ]
       }
     },
     "/*": {
@@ -943,7 +1032,75 @@
         "string(/*/fibonacci[ count(/*/fibonacci) ])": "75025",
         "string(/*/fibonacci[ count(/*/fibonacci) - 1 ])": "46368",
         "sum(//fibonacci)": 196417,
-        "sum(//fibonacci/@index)": 325
+        "sum(//fibonacci/@index)": 325,
+        "/*/fibonacci[last()]": [
+          "/Fibonacci_Numbers[1]/fibonacci[26]"
+        ],
+        "/*/fibonacci[position() < last()]": [
+          "/Fibonacci_Numbers[1]/fibonacci[1]",
+          "/Fibonacci_Numbers[1]/fibonacci[2]",
+          "/Fibonacci_Numbers[1]/fibonacci[3]",
+          "/Fibonacci_Numbers[1]/fibonacci[4]",
+          "/Fibonacci_Numbers[1]/fibonacci[5]",
+          "/Fibonacci_Numbers[1]/fibonacci[6]",
+          "/Fibonacci_Numbers[1]/fibonacci[7]",
+          "/Fibonacci_Numbers[1]/fibonacci[8]",
+          "/Fibonacci_Numbers[1]/fibonacci[9]",
+          "/Fibonacci_Numbers[1]/fibonacci[10]",
+          "/Fibonacci_Numbers[1]/fibonacci[11]",
+          "/Fibonacci_Numbers[1]/fibonacci[12]",
+          "/Fibonacci_Numbers[1]/fibonacci[13]",
+          "/Fibonacci_Numbers[1]/fibonacci[14]",
+          "/Fibonacci_Numbers[1]/fibonacci[15]",
+          "/Fibonacci_Numbers[1]/fibonacci[16]",
+          "/Fibonacci_Numbers[1]/fibonacci[17]",
+          "/Fibonacci_Numbers[1]/fibonacci[18]",
+          "/Fibonacci_Numbers[1]/fibonacci[19]",
+          "/Fibonacci_Numbers[1]/fibonacci[20]",
+          "/Fibonacci_Numbers[1]/fibonacci[21]",
+          "/Fibonacci_Numbers[1]/fibonacci[22]",
+          "/Fibonacci_Numbers[1]/fibonacci[23]",
+          "/Fibonacci_Numbers[1]/fibonacci[24]",
+          "/Fibonacci_Numbers[1]/fibonacci[25]"
+        ],
+        "/*/fibonacci[position()>5 and position() < last()]": [
+          "/Fibonacci_Numbers[1]/fibonacci[6]",
+          "/Fibonacci_Numbers[1]/fibonacci[7]",
+          "/Fibonacci_Numbers[1]/fibonacci[8]",
+          "/Fibonacci_Numbers[1]/fibonacci[9]",
+          "/Fibonacci_Numbers[1]/fibonacci[10]",
+          "/Fibonacci_Numbers[1]/fibonacci[11]",
+          "/Fibonacci_Numbers[1]/fibonacci[12]",
+          "/Fibonacci_Numbers[1]/fibonacci[13]",
+          "/Fibonacci_Numbers[1]/fibonacci[14]",
+          "/Fibonacci_Numbers[1]/fibonacci[15]",
+          "/Fibonacci_Numbers[1]/fibonacci[16]",
+          "/Fibonacci_Numbers[1]/fibonacci[17]",
+          "/Fibonacci_Numbers[1]/fibonacci[18]",
+          "/Fibonacci_Numbers[1]/fibonacci[19]",
+          "/Fibonacci_Numbers[1]/fibonacci[20]",
+          "/Fibonacci_Numbers[1]/fibonacci[21]",
+          "/Fibonacci_Numbers[1]/fibonacci[22]",
+          "/Fibonacci_Numbers[1]/fibonacci[23]",
+          "/Fibonacci_Numbers[1]/fibonacci[24]",
+          "/Fibonacci_Numbers[1]/fibonacci[25]"
+        ],
+        "/*/fibonacci[@index>5][position()>5 and position() < last()]": [
+          "/Fibonacci_Numbers[1]/fibonacci[12]",
+          "/Fibonacci_Numbers[1]/fibonacci[13]",
+          "/Fibonacci_Numbers[1]/fibonacci[14]",
+          "/Fibonacci_Numbers[1]/fibonacci[15]",
+          "/Fibonacci_Numbers[1]/fibonacci[16]",
+          "/Fibonacci_Numbers[1]/fibonacci[17]",
+          "/Fibonacci_Numbers[1]/fibonacci[18]",
+          "/Fibonacci_Numbers[1]/fibonacci[19]",
+          "/Fibonacci_Numbers[1]/fibonacci[20]",
+          "/Fibonacci_Numbers[1]/fibonacci[21]",
+          "/Fibonacci_Numbers[1]/fibonacci[22]",
+          "/Fibonacci_Numbers[1]/fibonacci[23]",
+          "/Fibonacci_Numbers[1]/fibonacci[24]",
+          "/Fibonacci_Numbers[1]/fibonacci[25]"
+        ]
       }
     }
   },
@@ -992,6 +1149,64 @@
           "/body[1]/p[1]/span[1]"
         ],
         "local-name(preceding::*[1])": "span"
+      }
+    }
+  },
+  "purchase_order.xml": {
+    "/": {
+      "xpaths": {
+        "/purchaseOrder[ not( count( @* ) = 1 )]": [],
+        "/purchaseOrder/items/item[ not( count( @* ) = 1 )]": [],
+        "/*[ not( self::purchaseOrder )]": [],
+        "/purchaseOrder[ not( @orderDate )]": [],
+        "/purchaseOrder/*[ not( self::shipTo or self::billTo or self::comment or self::items )]": [],
+        "/purchaseOrder/items/*[ not( self::item )]": [],
+        "/purchaseOrder/items/item[ not( @partNum )]": [],
+        "/purchaseOrder/*[ 1 ][ not( self::shipTo )]": [],
+        "/purchaseOrder/*[ 2 ][ not( self::billTo )]": [],
+        "/purchaseOrder[ comment ]/*[ 3 ][ not( self::comment )]": [],
+        "/purchaseOrder/shipTo/*[ 1 ][ not( self::name )]": [],
+        "/purchaseOrder/shipTo/*[ 2 ][ not( self::street )]": [
+          "/purchaseOrder[1]/shipTo[1]/streetX[1]"
+        ],
+        "/purchaseOrder/shipTo/*[ 3 ][ not( self::city )]": [],
+        "/purchaseOrder/shipTo/*[ 4 ][ not( self::state )]": [],
+        "/purchaseOrder/shipTo/*[ 5 ][ not( self::zip )]": [],
+        "/purchaseOrder/shipTo/*[ not( self::name or self::street or self::city or self::state or self::zip )]": [
+          "/purchaseOrder[1]/shipTo[1]/streetX[1]"
+        ],
+        "/purchaseOrder/items/item/*[ not( self::productName or self::quantity or self::USPrice or self::comment or self::shipDate)]": [],
+        "/purchaseOrder/items/item/*[ 1 ][ not( self::productName )]": [],
+        "/purchaseOrder/items/item/*[ 2 ][ not( self::quantity )]": [],
+        "/purchaseOrder/items/item/*[ 3 ][ not( self::USPrice )]": [],
+        "/purchaseOrder/items/item[ comment ]/*[ 5 ][ not( self::shipDate )]": [],
+        "purchaseOrder/items/item[ not( comment )]/*[ 4 ][ not( self::shipDate )]": [],
+        "purchaseOrder/items/item[ comment ]/*[ 4 ][ not( self::comment )]": [],
+        "purchaseOrder/billTo/*[ 1 ][ not( self::name )]": [],
+        "purchaseOrder/billTo/*[ 2 ][ not( self::street )]": [],
+        "purchaseOrder/billTo/*[ 3 ][ not( self::city )]": [],
+        "purchaseOrder/billTo/*[ 4 ][ not( self::state )]": [],
+        "purchaseOrder/billTo/*[ 5 ][ not( self::zip )]": [],
+        "/purchaseOrder/billTo/*[ not( self::name or self::street or self::city or self::state or self::zip )]": [],
+        "/purchaseOrder/*[ position() >= 3 ][ not( self::comment or self::items )]": [],
+        "//shipTo | //billTo": [
+          "/purchaseOrder[1]/shipTo[1]",
+          "/purchaseOrder[1]/billTo[1]"
+        ],
+        "//shipTo | //billTo | //item": [
+          "/purchaseOrder[1]/shipTo[1]",
+          "/purchaseOrder[1]/billTo[1]",
+          "/purchaseOrder[1]/items[1]/item[1]",
+          "/purchaseOrder[1]/items[1]/item[2]"
+        ],
+        "count(//shipTo | //billTo | //item)": 4,
+        "//shipTo | //billTo | //item | //items/*": [
+          "/purchaseOrder[1]/shipTo[1]",
+          "/purchaseOrder[1]/billTo[1]",
+          "/purchaseOrder[1]/items[1]/item[1]",
+          "/purchaseOrder[1]/items[1]/item[2]"
+        ],
+        "count(//shipTo | //billTo | //item | //items/*)": 4.0
       }
     }
   }

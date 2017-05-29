@@ -39,6 +39,7 @@ var coreFunctions = map[string]*Function{
 	"local-name":       {String, []DataType{NodeSet}, 0, false, nil},
 	"namespace-uri":    {String, []DataType{NodeSet}, 0, false, nil},
 	"position":         {Number, nil, 0, false, nil},
+	"last":             {Number, nil, 0, false, nil},
 	"count":            {Number, []DataType{NodeSet}, 1, false, nil},
 	"sum":              {Number, []DataType{NodeSet}, 1, false, nil},
 	"normalize-space":  {String, []DataType{String}, 0, false, nil},
@@ -102,6 +103,8 @@ func coreFunction(name string, args []expr) expr {
 		return &substringAfter{args[0], args[1]}
 	case "position":
 		return &position{}
+	case "last":
+		return &last{}
 	case "true":
 		return booleanVal(true)
 	case "false":
@@ -192,6 +195,18 @@ func (position) resultType() DataType {
 
 func (position) eval(ctx *Context) interface{} {
 	return float64(ctx.Pos)
+}
+
+/************************************************************************/
+
+type last struct{}
+
+func (last) resultType() DataType {
+	return Number
+}
+
+func (last) eval(ctx *Context) interface{} {
+	return float64(ctx.Size)
 }
 
 /************************************************************************/

@@ -552,7 +552,7 @@ func (s *step) eval(ctx []dom.Node, vars Variables) []dom.Node {
 func evalPredicates(predicates []expr, ns []dom.Node, vars Variables) []dom.Node {
 	for _, predicate := range predicates {
 		var pr []dom.Node
-		scontext := &Context{nil, 0, 1, vars}
+		scontext := &Context{nil, 0, len(ns), vars}
 		for _, n := range ns {
 			scontext.Node = n
 			scontext.Pos++
