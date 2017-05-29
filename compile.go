@@ -114,7 +114,7 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		if !ok {
 			panic(UnresolvedPrefixError(e.Prefix))
 		}
-		fname := ClarkName(uri, e.Name)
+		fname := ClarkName(uri, e.Local)
 		var function *Function
 		if c.Functions != nil {
 			function = c.Functions.resolve(fname)
@@ -122,15 +122,15 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		coreFunc := false
 		if function == nil {
 			if e.Prefix == "" {
-				function, coreFunc = coreFunctions[e.Name]
+				function, coreFunc = coreFunctions[e.Local]
 			}
 		}
 		if function == nil {
-			panic(UnresolvedFunctionError(e.Name))
+			panic(UnresolvedFunctionError(e.Local))
 		}
 
 		if !function.canAccept(len(e.Params)) {
-			panic(ArgCountError(e.Name))
+			panic(ArgCountError(e.Local))
 		}
 		var args []expr
 		if len(e.Params) > 0 {
@@ -152,7 +152,7 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 			}
 		}
 		if coreFunc {
-			return coreFunction(e.Name, args)
+			return coreFunction(e.Local, args)
 		}
 		return &funcCall{args, function.Returns, function.Impl}
 	default:
