@@ -8,11 +8,8 @@ import (
 	"bytes"
 	"fmt"
 	"math"
-	"strconv"
-
-	"unicode/utf8"
-
 	"strings"
+	"unicode/utf8"
 
 	"github.com/santhosh-tekuri/dom"
 	"github.com/santhosh-tekuri/xpath"
@@ -37,60 +34,9 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		case xpath.Or:
 			return &logicalExpr{asBoolean(lhs), asBoolean(rhs), true}
 		case xpath.EQ, xpath.NEQ:
-			apply := equalityOp[e.Op]
-			if lhs.resultType() == NodeSet && rhs.resultType() == NodeSet {
-				panic("equalitiy on nodesets is not implemented")
-			} else if lhs.resultType() != NodeSet && rhs.resultType() != NodeSet {
-				if lhs.resultType() == Boolean || rhs.resultType() == Boolean {
-					return &valueEqualityExpr{asBoolean(lhs), asBoolean(rhs), apply}
-				}
-				if lhs.resultType() == Number || rhs.resultType() == Number {
-					return &valueEqualityExpr{asNumber(lhs), asNumber(rhs), apply}
-				}
-				return &valueEqualityExpr{asString(lhs), asString(rhs), apply}
-			} else {
-				var valueExpr, nodeSetExpr expr
-				if lhs.resultType() == NodeSet {
-					valueExpr, nodeSetExpr = rhs, lhs
-				} else {
-					valueExpr, nodeSetExpr = lhs, rhs
-				}
-				switch valueExpr.resultType() {
-				case Boolean:
-					return &valueEqualityExpr{valueExpr, asBoolean(nodeSetExpr), apply}
-				case String:
-					return &valuesEqualityExpr{valueExpr, nodeSetExpr, node2string, apply}
-				case Number:
-					return &valuesEqualityExpr{valueExpr, nodeSetExpr, node2number, apply}
-				default:
-					panic("impossible")
-				}
-			}
+			return &equalityExpr{lhs, rhs, equalityOp[e.Op]}
 		case xpath.LT, xpath.LTE, xpath.GT, xpath.GTE:
-			apply := relationalOp[e.Op-xpath.LT]
-			if lhs.resultType() == NodeSet && rhs.resultType() == NodeSet {
-				panic("relationalOp on nodesets is not implemented")
-			} else if lhs.resultType() != NodeSet && rhs.resultType() != NodeSet {
-				return &valueRelationalExpr{asNumber(lhs), asNumber(rhs), apply}
-			} else {
-				if lhs.resultType() == NodeSet {
-					var op xpath.Op
-					switch e.Op {
-					case xpath.LT:
-						op = xpath.GTE
-					case xpath.LTE:
-						op = xpath.GT
-					case xpath.GT:
-						op = xpath.LTE
-					case xpath.GTE:
-						op = xpath.LT
-					}
-					apply = relationalOp[op-xpath.LT]
-					return &valuesRelationalExpr{asNumber(rhs), lhs, apply}
-				} else {
-					return &valuesRelationalExpr{asNumber(lhs), rhs, apply}
-				}
-			}
+			return &relationalExpr{lhs, rhs, relationalOp[e.Op-xpath.LT]}
 		default:
 			panic(fmt.Sprintf("binaryOp %v is not implemented", e.Op))
 		}
@@ -155,7 +101,7 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				predicate := c.compile(epredicate)
 				switch predicate.resultType() {
 				case Number:
-					predicate = &valueEqualityExpr{position{}, predicate, equalityOp[0]}
+					predicate = &equalityExpr{position{}, predicate, equalityOp[0]}
 				default:
 					predicate = asBoolean(predicate)
 				}
@@ -270,21 +216,6 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 	}
 }
 
-type DataType int
-
-const (
-	NodeSet DataType = iota
-	String
-	Number
-	Boolean
-)
-
-var resultTypeNames = []string{"node-set", "string", "number", "boolean"}
-
-func (r DataType) String() string {
-	return resultTypeNames[r]
-}
-
 type expr interface {
 	resultType() DataType
 	eval(ctx *context) interface{}
@@ -334,14 +265,6 @@ func (e booleanVal) eval(ctx *context) interface{} {
 
 /************************************************************************/
 
-func string2number(s string) float64 {
-	f, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return math.NaN()
-	}
-	return f
-}
-
 func asNumber(expr expr) expr {
 	if expr.resultType() == Number {
 		return expr
@@ -358,20 +281,7 @@ func (*numberFunc) resultType() DataType {
 }
 
 func (f *numberFunc) eval(ctx *context) interface{} {
-	r := f.arg.eval(ctx)
-	switch r := r.(type) {
-	case float64:
-		return r
-	case bool:
-		if r {
-			return float64(1)
-		}
-		return float64(0)
-	case string:
-		return string2number(r)
-	default:
-		panic(fmt.Sprintf("numberFunc(%T) is not implemented", r))
-	}
+	return value2Number(f.arg.eval(ctx))
 }
 
 /************************************************************************/
@@ -392,61 +302,10 @@ func (*booleanFunc) resultType() DataType {
 }
 
 func (f *booleanFunc) eval(ctx *context) interface{} {
-	r := f.arg.eval(ctx)
-	switch r := r.(type) {
-	case float64:
-		if r == 0 || math.IsNaN(r) {
-			return false
-		}
-		return true
-	case bool:
-		return r
-	case string:
-		return len(r) > 0
-	case []dom.Node:
-		return len(r) > 0
-	}
-	panic("impossible")
+	return value2Boolean(f.arg.eval(ctx))
 }
 
 /************************************************************************/
-
-func node2string(n dom.Node) interface{} {
-	return textContent(n)
-}
-
-func node2number(n dom.Node) interface{} {
-	return string2number(textContent(n))
-}
-
-func textContent(n dom.Node) string {
-	switch n := n.(type) {
-	case *dom.Comment:
-		return n.Data
-	case *dom.ProcInst:
-		return n.Data
-	case *dom.Text:
-		return n.Data
-	case *dom.NameSpace:
-		return n.URI
-	case *dom.Attr:
-		return n.Value
-	default:
-		buf := new(bytes.Buffer)
-		collectText(n, buf)
-		return buf.String()
-	}
-}
-
-func collectText(n dom.Node, buf *bytes.Buffer) {
-	if t, ok := n.(*dom.Text); ok {
-		buf.WriteString(t.Data)
-	} else if p, ok := n.(dom.Parent); ok {
-		for _, c := range p.Children() {
-			collectText(c, buf)
-		}
-	}
-}
 
 func asString(expr expr) expr {
 	if expr.resultType() == String {
@@ -463,35 +322,8 @@ func (*stringFunc) resultType() DataType {
 	return String
 }
 
-func (f *stringFunc) eval(ctx *context) interface{} {
-	r := f.arg.eval(ctx)
-	switch r := r.(type) {
-	case string:
-		return r
-	case float64:
-		if math.IsNaN(r) {
-			return "NaN"
-		}
-		if math.IsInf(r, +1) {
-			return "Infinity"
-		}
-		if math.IsInf(r, -1) {
-			return "-Infinity"
-		}
-		if r == math.Trunc(r) {
-			return strconv.Itoa(int(r))
-		}
-		return strconv.FormatFloat(r, 'f', -1, 64)
-	case bool:
-		return strconv.FormatBool(r)
-	case []dom.Node:
-		if len(r) == 0 {
-			return ""
-		}
-		return textContent(r[0])
-	default:
-		panic(fmt.Sprintf("stringFunc(%T) is not implemented", r))
-	}
+func (e *stringFunc) eval(ctx *context) interface{} {
+	return value2String(e.arg.eval(ctx))
 }
 
 /************************************************************************/
@@ -553,42 +385,58 @@ var equalityOp = []func(interface{}, interface{}) bool{
 	},
 }
 
-type valueEqualityExpr struct {
+type equalityExpr struct {
 	lhs   expr
 	rhs   expr
 	apply func(interface{}, interface{}) bool
 }
 
-func (*valueEqualityExpr) resultType() DataType {
+func (*equalityExpr) resultType() DataType {
 	return Boolean
 }
 
-func (e *valueEqualityExpr) eval(ctx *context) interface{} {
-	lhs := e.lhs.eval(ctx)
-	rhs := e.rhs.eval(ctx)
-	return e.apply(lhs, rhs)
-}
-
-type valuesEqualityExpr struct {
-	valueExpr   expr
-	nodeSetExpr expr
-	convert     func(dom.Node) interface{}
-	apply       func(interface{}, interface{}) bool
-}
-
-func (*valuesEqualityExpr) resultType() DataType {
-	return Boolean
-}
-
-func (e *valuesEqualityExpr) eval(ctx *context) interface{} {
-	value := e.valueExpr.eval(ctx)
-	nodeSet := e.nodeSetExpr.eval(ctx).([]dom.Node)
-	for _, n := range nodeSet {
-		if e.apply(value, e.convert(n)) {
-			return true
+func (e *equalityExpr) eval(ctx *context) interface{} {
+	lhs, rhs := e.lhs.eval(ctx), e.rhs.eval(ctx)
+	lhsType, rhsType := typeOf(lhs), typeOf(rhs)
+	switch {
+	case lhsType == NodeSet && rhsType == NodeSet:
+		panic("equality on nodesets is not implemented")
+	case lhsType != NodeSet && rhsType != NodeSet:
+		switch {
+		case lhsType == Boolean || rhsType == Boolean:
+			return e.apply(value2Boolean(lhs), value2Boolean(rhs))
+		case lhsType == Number || rhsType == Number:
+			return e.apply(value2Number(lhs), value2Number(rhs))
+		default:
+			return e.apply(value2String(lhs), value2String(rhs))
+		}
+	default:
+		var val interface{}
+		var nodeSet []dom.Node
+		if lhsType == NodeSet {
+			val, nodeSet = rhs, lhs.([]dom.Node)
+		} else {
+			val, nodeSet = lhs, rhs.([]dom.Node)
+		}
+		switch typeOf(val) {
+		case Boolean:
+			return e.apply(val, value2Boolean(nodeSet))
+		case String:
+			for _, n := range nodeSet {
+				if e.apply(val, node2string(n)) {
+					return true
+				}
+			}
+			return false
+		default:
+			for _, n := range nodeSet {
+				if e.apply(val, node2number(n)) {
+					return true
+				}
+			}
+			return false
 		}
 	}
-	return false
 }
 
 /************************************************************************/
@@ -608,41 +456,41 @@ var relationalOp = []func(float64, float64) bool{
 	},
 }
 
-type valueRelationalExpr struct {
+type relationalExpr struct {
 	lhs   expr
 	rhs   expr
 	apply func(float64, float64) bool
 }
 
-func (*valueRelationalExpr) resultType() DataType {
+func (*relationalExpr) resultType() DataType {
 	return Boolean
 }
 
-func (e *valueRelationalExpr) eval(ctx *context) interface{} {
-	lhs := e.lhs.eval(ctx)
-	rhs := e.rhs.eval(ctx)
-	return e.apply(lhs.(float64), rhs.(float64))
-}
-
-type valuesRelationalExpr struct {
-	valueExpr   expr
-	nodeSetExpr expr
-	apply       func(float64, float64) bool
-}
-
-func (*valuesRelationalExpr) resultType() DataType {
-	return Boolean
-}
-
-func (e *valuesRelationalExpr) eval(ctx *context) interface{} {
-	value := e.valueExpr.eval(ctx).(float64)
-	nodeSet := e.nodeSetExpr.eval(ctx).([]dom.Node)
-	for _, n := range nodeSet {
-		if e.apply(value, node2number(n).(float64)) {
-			return true
+func (e *relationalExpr) eval(ctx *context) interface{} {
+	lhs, rhs := e.lhs.eval(ctx), e.rhs.eval(ctx)
+	lhsType, rhsType := typeOf(lhs), typeOf(rhs)
+	switch {
+	case lhsType == NodeSet && rhsType == NodeSet:
+		panic("relationalOp on nodesets is not implemented")
+	case lhsType != NodeSet && rhsType != NodeSet:
+		return e.apply(value2Number(lhs), value2Number(rhs))
+	case lhsType == NodeSet:
+		rhs := value2Number(rhs)
+		for _, n := range lhs.([]dom.Node) {
+			if e.apply(node2number(n), rhs) {
+				return true
+			}
 		}
+		return false
+	default:
+		lhs := value2Number(lhs)
+		for _, n := range rhs.([]dom.Node) {
+			if e.apply(lhs, node2number(n)) {
+				return true
+			}
+		}
+		return false
 	}
-	return false
 }
 
 /************************************************************************/
@@ -791,7 +639,7 @@ func (*sum) resultType() DataType {
 func (e *sum) eval(ctx *context) interface{} {
 	var r float64
 	for _, n := range e.arg.eval(ctx).([]dom.Node) {
-		r += node2number(n).(float64)
+		r += node2number(n)
 	}
 	return r
 }
