@@ -339,15 +339,3 @@ func parent(n dom.Node) dom.Node {
 		return n.Parent()
 	}
 }
-
-func index(n dom.Node) int {
-	if n.Parent() == nil {
-		return -1
-	}
-	for i, child := range n.Parent().Children() {
-		if child == n {
-			return i
-		}
-	}
-	return -1
-}
