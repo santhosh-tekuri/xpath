@@ -818,5 +818,23 @@
         "/e1/e2/e3[lang('es-BR')]": []
       }
     }
+  },
+  "jaxen24.xml": {
+    "/": {
+      "xpaths": {
+        "//preceding::x": [],
+        "//following::x": [],
+        "/descendant::*/preceding::x": [],
+        "/descendant::node()/preceding::x": []
+      }
+    },
+    "/body/div": {
+      "xpaths": {
+        "preceding::*[1]": [
+          "/body[1]/p[1]/span[1]"
+        ],
+        "local-name(preceding::*[1])": "span"
+      }
+    }
   }
 }
