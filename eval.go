@@ -5,6 +5,8 @@
 package xpatheng
 
 import (
+	"runtime"
+
 	"github.com/santhosh-tekuri/dom"
 	"github.com/santhosh-tekuri/xpath"
 )
@@ -18,8 +20,16 @@ func (x *XPath) String() string {
 	return x.str
 }
 
-func (x *XPath) Eval(n dom.Node) interface{} {
-	return x.expr.eval(&context{n, 0, 1})
+func (x *XPath) Eval(n dom.Node) (r interface{}, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(runtime.Error); ok {
+				panic(r)
+			}
+			err = r.(error)
+		}
+	}()
+	return x.expr.eval(&context{n, 0, 1}), nil
 }
 
 type Compiler struct {

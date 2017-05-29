@@ -66,7 +66,12 @@ func TestEval(t *testing.T) {
 				t.Error("FAIL:", err)
 				continue
 			}
-			contextNS := contextExpr.Eval(doc).([]dom.Node)
+			r, err := contextExpr.Eval(doc)
+			if err != nil {
+				t.Error("FAIL:", err)
+				continue
+			}
+			contextNS := r.([]dom.Node)
 			if len(contextNS) != 1 {
 				t.Errorf("FAIL: context resulted %d nodes", len(contextNS))
 			}
@@ -82,7 +87,11 @@ func TestEval(t *testing.T) {
 					continue
 				}
 
-				got := xpath.Eval(context)
+				got, err := xpath.Eval(context)
+				if err != nil {
+					t.Error("FAIL:", err)
+					continue
+				}
 				switch expected := expected.(type) {
 				case float64:
 					_, ok := got.(float64)
