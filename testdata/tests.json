@@ -638,7 +638,10 @@
           "/Template[1]"
         ],
         "namespace::*": [],
-        "/namespace::*": []
+        "/namespace::*": [],
+        "count(/Template/Application1/namespace::*)": 3,
+        "count(/Template/Application2/namespace::*)": 3,
+        "count(//namespace::*)": 25
       }
     },
     "/ ": {
@@ -647,6 +650,16 @@
       },
       "xpaths": {
         "//namespace::somethingelse": []
+      }
+    },
+    "/Template/Application1" : {
+      "xpaths": {
+        "count(namespace::*)": 3,
+        "count(/namespace::*)": 0,
+        "count(/Template/Application1/namespace::*)": 3,
+        "count(/Template/Application2/namespace::*)": 3,
+        "count(//namespace::*)": 25,
+        "count(//namespace::xplt)": 8
       }
     },
     "/Template/namespace::xml": {

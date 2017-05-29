@@ -239,6 +239,8 @@ func getXPath(n dom.Node, uri2prefix map[string]string) string {
 				}
 			}
 			arr = append(arr, fmt.Sprintf("processing-instruction(%q)[%d]", x.Target, pos))
+		case *dom.NameSpace:
+			arr = append(arr, fmt.Sprintf("namespace::%s", x.Prefix))
 		default:
 			panic(fmt.Sprintf("getXPath(%T) is not implemented", x))
 		}
