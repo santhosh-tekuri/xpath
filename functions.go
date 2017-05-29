@@ -13,26 +13,26 @@ import (
 	"github.com/santhosh-tekuri/dom"
 )
 
-type function struct {
-	returns   DataType
-	args      []DataType
-	mandatory int
-	variadic  bool
-	impl      func(ctx *context, args []interface{}) interface{}
+type Function struct {
+	Returns   DataType
+	Args      []DataType
+	Mandatory int
+	Variadic  bool
+	Impl      func(ctx *Context, args []interface{}) interface{}
 }
 
-func (f *function) canAccept(nArgs int) bool {
-	return nArgs >= f.mandatory && (f.variadic || nArgs <= len(f.args))
+func (f *Function) canAccept(nArgs int) bool {
+	return nArgs >= f.Mandatory && (f.Variadic || nArgs <= len(f.Args))
 }
 
-func (f *function) argType(i int) DataType {
-	if i < len(f.args) {
-		return f.args[i]
+func (f *Function) argType(i int) DataType {
+	if i < len(f.Args) {
+		return f.Args[i]
 	}
-	return f.args[len(f.args)-1]
+	return f.Args[len(f.Args)-1]
 }
 
-var coreFunctions = map[string]*function{
+var coreFunctions = map[string]*Function{
 	"string":           {String, []DataType{NodeSet}, 0, false, nil},
 	"name":             {String, []DataType{NodeSet}, 0, false, nil},
 	"local-name":       {String, []DataType{NodeSet}, 0, false, nil},
@@ -133,8 +133,8 @@ func (contextExpr) resultType() DataType {
 	return NodeSet
 }
 
-func (contextExpr) eval(ctx *context) interface{} {
-	return []dom.Node{ctx.node}
+func (contextExpr) eval(ctx *Context) interface{} {
+	return []dom.Node{ctx.Node}
 }
 
 /************************************************************************/
@@ -147,7 +147,7 @@ func (*numberFunc) resultType() DataType {
 	return Number
 }
 
-func (f *numberFunc) eval(ctx *context) interface{} {
+func (f *numberFunc) eval(ctx *Context) interface{} {
 	return value2Number(f.arg.eval(ctx))
 }
 
@@ -161,7 +161,7 @@ func (*booleanFunc) resultType() DataType {
 	return Boolean
 }
 
-func (f *booleanFunc) eval(ctx *context) interface{} {
+func (f *booleanFunc) eval(ctx *Context) interface{} {
 	return value2Boolean(f.arg.eval(ctx))
 }
 
@@ -175,7 +175,7 @@ func (*stringFunc) resultType() DataType {
 	return String
 }
 
-func (e *stringFunc) eval(ctx *context) interface{} {
+func (e *stringFunc) eval(ctx *Context) interface{} {
 	return value2String(e.arg.eval(ctx))
 }
 
@@ -187,8 +187,8 @@ func (position) resultType() DataType {
 	return Number
 }
 
-func (position) eval(ctx *context) interface{} {
-	return float64(ctx.pos)
+func (position) eval(ctx *Context) interface{} {
+	return float64(ctx.Pos)
 }
 
 /************************************************************************/
@@ -201,7 +201,7 @@ func (*count) resultType() DataType {
 	return Number
 }
 
-func (e *count) eval(ctx *context) interface{} {
+func (e *count) eval(ctx *Context) interface{} {
 	return float64(len(e.arg.eval(ctx).([]dom.Node)))
 }
 
@@ -215,7 +215,7 @@ func (*sum) resultType() DataType {
 	return Number
 }
 
-func (e *sum) eval(ctx *context) interface{} {
+func (e *sum) eval(ctx *Context) interface{} {
 	var r float64
 	for _, n := range e.arg.eval(ctx).([]dom.Node) {
 		r += node2number(n)
@@ -233,7 +233,7 @@ func (*localName) resultType() DataType {
 	return String
 }
 
-func (e *localName) eval(ctx *context) interface{} {
+func (e *localName) eval(ctx *Context) interface{} {
 	ns := e.arg.eval(ctx).([]dom.Node)
 	if len(ns) > 0 {
 		switch n := ns[0].(type) {
@@ -260,7 +260,7 @@ func (*namespaceURI) resultType() DataType {
 	return String
 }
 
-func (e *namespaceURI) eval(ctx *context) interface{} {
+func (e *namespaceURI) eval(ctx *Context) interface{} {
 	ns := e.arg.eval(ctx).([]dom.Node)
 	if len(ns) > 0 {
 		switch n := ns[0].(type) {
@@ -283,7 +283,7 @@ func (*qname) resultType() DataType {
 	return String
 }
 
-func (e *qname) eval(ctx *context) interface{} {
+func (e *qname) eval(ctx *Context) interface{} {
 	ns := e.arg.eval(ctx).([]dom.Node)
 	if len(ns) > 0 {
 		switch n := ns[0].(type) {
@@ -310,7 +310,7 @@ func (*normalizeSpace) resultType() DataType {
 	return String
 }
 
-func (e *normalizeSpace) eval(ctx *context) interface{} {
+func (e *normalizeSpace) eval(ctx *Context) interface{} {
 	buf := []byte(e.arg.eval(ctx).(string))
 	read, write, lastWrite := 0, 0, 0
 	wroteOne := false
@@ -356,7 +356,7 @@ func (*startsWith) resultType() DataType {
 	return Boolean
 }
 
-func (e *startsWith) eval(ctx *context) interface{} {
+func (e *startsWith) eval(ctx *Context) interface{} {
 	return strings.HasPrefix(e.str.eval(ctx).(string), e.prefix.eval(ctx).(string))
 }
 
@@ -371,7 +371,7 @@ func (*endsWith) resultType() DataType {
 	return Boolean
 }
 
-func (e *endsWith) eval(ctx *context) interface{} {
+func (e *endsWith) eval(ctx *Context) interface{} {
 	return strings.HasSuffix(e.str.eval(ctx).(string), e.prefix.eval(ctx).(string))
 }
 
@@ -386,7 +386,7 @@ func (*contains) resultType() DataType {
 	return Boolean
 }
 
-func (e *contains) eval(ctx *context) interface{} {
+func (e *contains) eval(ctx *Context) interface{} {
 	return strings.Contains(e.str.eval(ctx).(string), e.substr.eval(ctx).(string))
 }
 
@@ -400,7 +400,7 @@ func (*stringLength) resultType() DataType {
 	return Number
 }
 
-func (e *stringLength) eval(ctx *context) interface{} {
+func (e *stringLength) eval(ctx *Context) interface{} {
 	return float64(utf8.RuneCountInString(e.str.eval(ctx).(string)))
 }
 
@@ -414,7 +414,7 @@ func (*concat) resultType() DataType {
 	return String
 }
 
-func (e *concat) eval(ctx *context) interface{} {
+func (e *concat) eval(ctx *Context) interface{} {
 	buf := new(bytes.Buffer)
 	for _, arg := range e.args {
 		buf.WriteString(arg.eval(ctx).(string))
@@ -434,7 +434,7 @@ func (*translate) resultType() DataType {
 	return String
 }
 
-func (e *translate) eval(ctx *context) interface{} {
+func (e *translate) eval(ctx *Context) interface{} {
 	from := []rune(e.from.eval(ctx).(string))
 	to := []rune(e.to.eval(ctx).(string))
 	replace := make(map[rune]rune)
@@ -479,7 +479,7 @@ func (*substringBefore) resultType() DataType {
 	return String
 }
 
-func (e *substringBefore) eval(ctx *context) interface{} {
+func (e *substringBefore) eval(ctx *Context) interface{} {
 	str := e.str.eval(ctx).(string)
 	if i := strings.Index(str, e.match.eval(ctx).(string)); i != -1 {
 		return str[:i]
@@ -498,7 +498,7 @@ func (*substringAfter) resultType() DataType {
 	return String
 }
 
-func (e *substringAfter) eval(ctx *context) interface{} {
+func (e *substringAfter) eval(ctx *Context) interface{} {
 	str := e.str.eval(ctx).(string)
 	match := e.match.eval(ctx).(string)
 	if i := strings.Index(str, match); i != -1 {
@@ -519,7 +519,7 @@ func (*substring) resultType() DataType {
 	return String
 }
 
-func (e *substring) eval(ctx *context) interface{} {
+func (e *substring) eval(ctx *Context) interface{} {
 	str := e.str.eval(ctx).(string)
 	strLength := utf8.RuneCountInString(str)
 	if strLength == 0 {
@@ -589,7 +589,7 @@ func (*not) resultType() DataType {
 	return Boolean
 }
 
-func (e *not) eval(ctx *context) interface{} {
+func (e *not) eval(ctx *Context) interface{} {
 	return !e.arg.eval(ctx).(bool)
 }
 
@@ -603,9 +603,9 @@ func (*lang) resultType() DataType {
 	return Boolean
 }
 
-func (e *lang) eval(ctx *context) interface{} {
+func (e *lang) eval(ctx *Context) interface{} {
 	lang := e.lang.eval(ctx).(string)
-	n := ctx.node
+	n := ctx.Node
 	if _, ok := n.(*dom.Element); !ok {
 		n = n.Parent()
 	}

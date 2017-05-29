@@ -110,40 +110,51 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 	case *xpath.PathExpr:
 		return &pathExpr{c.compile(e.Filter), c.compile(e.LocationPath).(*locationPath)}
 	case *xpath.FuncCall:
-		if e.Prefix == "" {
-			function, ok := coreFunctions[e.Name]
-			if !ok {
-				panic(UnresolvedFunctionError(e.Name))
+		uri, ok := c.resolvePrefix(e.Prefix)
+		if !ok {
+			panic(UnresolvedPrefixError(e.Prefix))
+		}
+		fname := ClarkName(uri, e.Name)
+		var function *Function
+		if c.Functions != nil {
+			function = c.Functions.resolve(fname)
+		}
+		coreFunc := false
+		if function == nil {
+			if e.Prefix == "" {
+				function, coreFunc = coreFunctions[e.Name]
 			}
-			if !function.canAccept(len(e.Params)) {
-				panic(ArgCountError(e.Name))
-			}
-			var args []expr
-			if len(e.Params) > 0 {
-				args = make([]expr, len(e.Params))
-				for i, arg := range e.Params {
-					arg := c.compile(arg)
-					switch function.argType(i) {
-					case NodeSet:
-						args[i] = asNodeSet(arg)
-					case String:
-						args[i] = asString(arg)
-					case Number:
-						args[i] = asNumber(arg)
-					case Boolean:
-						args[i] = asBoolean(arg)
-					default:
-						panic(fmt.Sprintf("unexpected arg type %v", function.argType(i)))
-					}
+		}
+		if function == nil {
+			panic(UnresolvedFunctionError(e.Name))
+		}
+
+		if !function.canAccept(len(e.Params)) {
+			panic(ArgCountError(e.Name))
+		}
+		var args []expr
+		if len(e.Params) > 0 {
+			args = make([]expr, len(e.Params))
+			for i, arg := range e.Params {
+				arg := c.compile(arg)
+				switch function.argType(i) {
+				case NodeSet:
+					args[i] = asNodeSet(arg)
+				case String:
+					args[i] = asString(arg)
+				case Number:
+					args[i] = asNumber(arg)
+				case Boolean:
+					args[i] = asBoolean(arg)
+				default:
+					panic(fmt.Sprintf("unexpected arg type %v", function.argType(i)))
 				}
 			}
-			if funcExpr := coreFunction(e.Name, args); funcExpr != nil {
-				return funcExpr
-			}
-			return &funcCall{args, function.returns, function.impl}
-		} else {
-			panic("user functions is not implemented")
 		}
+		if coreFunc {
+			return coreFunction(e.Name, args)
+		}
+		return &funcCall{args, function.Returns, function.Impl}
 	default:
 		panic(fmt.Sprintf("compile(%T) is not implemented", e))
 	}
@@ -166,7 +177,7 @@ func (c *Compiler) compilePredicates(predicates []xpath.Expr) []expr {
 
 type expr interface {
 	resultType() DataType
-	eval(ctx *context) interface{}
+	eval(ctx *Context) interface{}
 }
 
 /************************************************************************/
@@ -177,7 +188,7 @@ func (numberVal) resultType() DataType {
 	return Number
 }
 
-func (e numberVal) eval(ctx *context) interface{} {
+func (e numberVal) eval(ctx *Context) interface{} {
 	return float64(e)
 }
 
@@ -187,7 +198,7 @@ func (stringVal) resultType() DataType {
 	return String
 }
 
-func (e stringVal) eval(ctx *context) interface{} {
+func (e stringVal) eval(ctx *Context) interface{} {
 	return string(e)
 }
 
@@ -197,7 +208,7 @@ func (booleanVal) resultType() DataType {
 	return Boolean
 }
 
-func (e booleanVal) eval(ctx *context) interface{} {
+func (e booleanVal) eval(ctx *Context) interface{} {
 	return bool(e)
 }
 
@@ -243,7 +254,7 @@ func (*negateExpr) resultType() DataType {
 	return Number
 }
 
-func (e *negateExpr) eval(ctx *context) interface{} {
+func (e *negateExpr) eval(ctx *Context) interface{} {
 	return -e.arg.eval(ctx).(float64)
 }
 
@@ -277,7 +288,7 @@ func (*arithmeticExpr) resultType() DataType {
 	return Number
 }
 
-func (e *arithmeticExpr) eval(ctx *context) interface{} {
+func (e *arithmeticExpr) eval(ctx *Context) interface{} {
 	return e.apply(e.lhs.eval(ctx).(float64), e.rhs.eval(ctx).(float64))
 }
 
@@ -302,7 +313,7 @@ func (*equalityExpr) resultType() DataType {
 	return Boolean
 }
 
-func (e *equalityExpr) eval(ctx *context) interface{} {
+func (e *equalityExpr) eval(ctx *Context) interface{} {
 	lhs, rhs := e.lhs.eval(ctx), e.rhs.eval(ctx)
 	lhsType, rhsType := typeOf(lhs), typeOf(rhs)
 	switch {
@@ -383,7 +394,7 @@ func (*relationalExpr) resultType() DataType {
 	return Boolean
 }
 
-func (e *relationalExpr) eval(ctx *context) interface{} {
+func (e *relationalExpr) eval(ctx *Context) interface{} {
 	lhs, rhs := e.lhs.eval(ctx), e.rhs.eval(ctx)
 	lhsType, rhsType := typeOf(lhs), typeOf(rhs)
 	switch {
@@ -432,7 +443,7 @@ func (*logicalExpr) resultType() DataType {
 	return Boolean
 }
 
-func (e *logicalExpr) eval(ctx *context) interface{} {
+func (e *logicalExpr) eval(ctx *Context) interface{} {
 	if e.lhs.eval(ctx) == e.lhsValue {
 		return e.lhsValue
 	}
@@ -450,7 +461,7 @@ func (*unionExpr) resultType() DataType {
 	return NodeSet
 }
 
-func (e *unionExpr) eval(ctx *context) interface{} {
+func (e *unionExpr) eval(ctx *Context) interface{} {
 	lhs := e.lhs.eval(ctx).([]dom.Node)
 	rhs := e.rhs.eval(ctx).([]dom.Node)
 	unique := make(map[dom.Node]struct{})
@@ -477,19 +488,19 @@ func (*locationPath) resultType() DataType {
 	return NodeSet
 }
 
-func (e *locationPath) eval(ctx *context) interface{} {
+func (e *locationPath) eval(ctx *Context) interface{} {
 	var ns []dom.Node
 	if e.abs {
-		ns = []dom.Node{document(ctx.node)}
+		ns = []dom.Node{ctx.Document()}
 	} else {
-		ns = []dom.Node{ctx.node}
+		ns = []dom.Node{ctx.Node}
 	}
 	return e.evalWith(ns, ctx)
 }
 
-func (e *locationPath) evalWith(ns []dom.Node, ctx *context) interface{} {
+func (e *locationPath) evalWith(ns []dom.Node, ctx *Context) interface{} {
 	for _, s := range e.steps {
-		ns = s.eval(ns, ctx.vars)
+		ns = s.eval(ns, ctx.Vars)
 	}
 	if len(e.steps) > 1 {
 		order(ns)
@@ -539,10 +550,10 @@ func (s *step) eval(ctx []dom.Node, vars Variables) []dom.Node {
 func evalPredicates(predicates []expr, ns []dom.Node, vars Variables) []dom.Node {
 	for _, predicate := range predicates {
 		var pr []dom.Node
-		scontext := &context{nil, 0, 1, vars}
+		scontext := &Context{nil, 0, 1, vars}
 		for _, n := range ns {
-			scontext.node = n
-			scontext.pos++
+			scontext.Node = n
+			scontext.Pos++
 			if predicate.eval(scontext).(bool) {
 				pr = append(pr, n)
 			}
@@ -550,15 +561,6 @@ func evalPredicates(predicates []expr, ns []dom.Node, vars Variables) []dom.Node
 		ns = pr
 	}
 	return ns
-}
-
-func document(n dom.Node) dom.Node {
-	for {
-		if _, ok := n.(*dom.Document); ok {
-			return n
-		}
-		n = parent(n)
-	}
 }
 
 /************************************************************************/
@@ -572,8 +574,8 @@ func (*filterExpr) resultType() DataType {
 	return NodeSet
 }
 
-func (e *filterExpr) eval(ctx *context) interface{} {
-	return evalPredicates(e.predicates, e.expr.eval(ctx).([]dom.Node), ctx.vars)
+func (e *filterExpr) eval(ctx *Context) interface{} {
+	return evalPredicates(e.predicates, e.expr.eval(ctx).([]dom.Node), ctx.Vars)
 }
 
 /************************************************************************/
@@ -587,7 +589,7 @@ func (*pathExpr) resultType() DataType {
 	return NodeSet
 }
 
-func (e *pathExpr) eval(ctx *context) interface{} {
+func (e *pathExpr) eval(ctx *Context) interface{} {
 	ns := e.filter.eval(ctx).([]dom.Node)
 	return e.locationPath.evalWith(ns, ctx)
 }
@@ -603,8 +605,11 @@ func (v *variable) resultType() DataType {
 	return v.returns
 }
 
-func (v *variable) eval(ctx *context) interface{} {
-	r := ctx.vars.eval(v.name)
+func (v *variable) eval(ctx *Context) interface{} {
+	if ctx.Vars == nil {
+		panic(UnresolvedVariableError(v.name))
+	}
+	r := ctx.Vars.eval(v.name)
 	if r == nil {
 		panic(UnresolvedVariableError(v.name))
 	}
@@ -622,14 +627,14 @@ func (v *variable) eval(ctx *context) interface{} {
 type funcCall struct {
 	args    []expr
 	returns DataType
-	impl    func(ctx *context, args []interface{}) interface{}
+	impl    func(ctx *Context, args []interface{}) interface{}
 }
 
 func (f *funcCall) resultType() DataType {
 	return f.returns
 }
 
-func (f *funcCall) eval(ctx *context) interface{} {
+func (f *funcCall) eval(ctx *Context) interface{} {
 	args := make([]interface{}, len(f.args))
 	for i, arg := range f.args {
 		args[i] = arg.eval(ctx)

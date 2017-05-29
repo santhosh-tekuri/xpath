@@ -83,7 +83,7 @@ func TestEval(t *testing.T) {
 				}
 			}
 
-			compiler := NewCompiler(prefix2uri)
+			compiler := &Compiler{NS: prefix2uri}
 			t.Log(" ", contextStr)
 			contextExpr, err := compiler.Compile(contextStr)
 			if err != nil {

@@ -22,15 +22,12 @@ func (x *XPath) Eval(n dom.Node, vars Variables) (r interface{}, err error) {
 	defer func() {
 		err = panic2error(recover())
 	}()
-	return x.expr.eval(&context{n, 0, 1, vars}), nil
+	return x.expr.eval(&Context{n, 0, 1, vars}), nil
 }
 
 type Compiler struct {
-	NS map[string]string
-}
-
-func NewCompiler(ns map[string]string) *Compiler {
-	return &Compiler{ns}
+	NS        map[string]string
+	Functions Functions
 }
 
 func (c *Compiler) resolvePrefix(prefix string) (string, bool) {
@@ -52,11 +49,21 @@ func (c *Compiler) Compile(str string) (x *XPath, err error) {
 	return &XPath{str, c.compile(expr)}, nil
 }
 
-type context struct {
-	node dom.Node
-	pos  int
-	size int
-	vars Variables
+type Context struct {
+	Node dom.Node
+	Pos  int
+	Size int
+	Vars Variables
+}
+
+func (ctx *Context) Document() *dom.Document {
+	n := ctx.Node
+	for {
+		if d, ok := n.(*dom.Document); ok {
+			return d
+		}
+		n = parent(n)
+	}
 }
 
 type Variables interface {
@@ -67,4 +74,8 @@ type VariableMap map[string]interface{}
 
 func (vm VariableMap) eval(variable string) interface{} {
 	return vm[variable]
+}
+
+type Functions interface {
+	resolve(function string) *Function
 }
