@@ -37,8 +37,10 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 			return &equalityExpr{lhs, rhs, equalityOp[e.Op]}
 		case xpath.LT, xpath.LTE, xpath.GT, xpath.GTE:
 			return &relationalExpr{lhs, rhs, relationalOp[e.Op-xpath.LT]}
+		case xpath.Union:
+			return &unionExpr{lhs, rhs}
 		default:
-			panic(fmt.Sprintf("binaryOp %v is not implemented", e.Op))
+			panic(fmt.Sprintf("unknown binaryOp %v", e.Op))
 		}
 	case *xpath.LocationPath:
 		lp := new(locationPath)
@@ -510,6 +512,33 @@ func (e *logicalExpr) eval(ctx *context) interface{} {
 		return e.lhsValue
 	}
 	return e.rhs.eval(ctx)
+}
+
+/************************************************************************/
+
+type unionExpr struct {
+	lhs expr
+	rhs expr
+}
+
+func (*unionExpr) resultType() DataType {
+	return NodeSet
+}
+
+func (e *unionExpr) eval(ctx *context) interface{} {
+	lhs := e.lhs.eval(ctx).([]dom.Node)
+	rhs := e.rhs.eval(ctx).([]dom.Node)
+	unique := make(map[dom.Node]struct{})
+	for _, n := range lhs {
+		unique[n] = struct{}{}
+	}
+	for _, n := range rhs {
+		if _, ok := unique[n]; !ok {
+			lhs = append(lhs, n)
+		}
+	}
+	order(lhs)
+	return lhs
 }
 
 /************************************************************************/
