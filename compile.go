@@ -110,6 +110,8 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		return lp
 	case *xpath.FilterExpr:
 		return &filterExpr{c.compile(e.Expr), c.compilePredicates(e.Predicates)}
+	case *xpath.PathExpr:
+		return &pathExpr{c.compile(e.Filter), c.compile(e.LocationPath).(*locationPath)}
 	case *xpath.FuncCall:
 		if e.Prefix == "" {
 			function, ok := coreFunctions[e.Name]
@@ -592,6 +594,10 @@ func (e *locationPath) eval(ctx *context) interface{} {
 	} else {
 		ns = []dom.Node{ctx.node}
 	}
+	return e.evalWith(ns, ctx)
+}
+
+func (e *locationPath) evalWith(ns []dom.Node, ctx *context) interface{} {
 	for _, s := range e.steps {
 		ns = s.eval(ns, ctx.vars)
 	}
@@ -678,6 +684,22 @@ func (*filterExpr) resultType() DataType {
 
 func (e *filterExpr) eval(ctx *context) interface{} {
 	return evalPredicates(e.predicates, e.expr.eval(ctx).([]dom.Node), ctx.vars)
+}
+
+/************************************************************************/
+
+type pathExpr struct {
+	filter       expr
+	locationPath *locationPath
+}
+
+func (*pathExpr) resultType() DataType {
+	return NodeSet
+}
+
+func (e *pathExpr) eval(ctx *context) interface{} {
+	ns := e.filter.eval(ctx).([]dom.Node)
+	return e.locationPath.evalWith(ns, ctx)
 }
 
 /************************************************************************/
