@@ -486,7 +486,8 @@
         "string(servlet-name)": "snoop",
         "string(servlet-name/text())": "snoop",
         "ends-with( servlet-class, 'Servlet' )": true,
-        "ends-with( servlet-class, 'S' )": false
+        "ends-with( servlet-class, 'S' )": false,
+        "repeat(servlet-name, 3)": "snoopsnoopsnoop"
       }
     },
     "/web-app/servlet[2]/servlet-name": {

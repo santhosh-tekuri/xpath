@@ -79,3 +79,9 @@ func (vm VariableMap) eval(variable string) interface{} {
 type Functions interface {
 	resolve(function string) *Function
 }
+
+type FunctionMap map[string]*Function
+
+func (fm FunctionMap) resolve(function string) *Function {
+	return fm[function]
+}
