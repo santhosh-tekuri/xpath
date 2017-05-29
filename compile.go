@@ -1110,7 +1110,7 @@ func (v *variable) eval(ctx *context) interface{} {
 	}
 	if v.returns == NodeSet {
 		if _, ok := r.([]dom.Node); !ok {
-			panic(fmt.Sprintf("variable %s must evaluate to node-set", v.name))
+			panic(VarMustBeNodeSet(v.name))
 		}
 	}
 	typeOf(r)

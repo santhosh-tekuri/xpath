@@ -34,10 +34,18 @@ func (e ArgCountError) Error() string {
 	return fmt.Sprintf("wrong number of args to function %s", string(e))
 }
 
-type InvalidValueError interface{}
+type InvalidValueError struct {
+	val interface{}
+}
 
 func (e InvalidValueError) Error() string {
-	return fmt.Sprintf("%T is not valid xpath data-type", interface{}(e))
+	return fmt.Sprintf("%T is not valid xpath data-type", e.val)
+}
+
+type VarMustBeNodeSet string
+
+func (e VarMustBeNodeSet) Error() string {
+	return fmt.Sprintf("variable %s must evaluate to node-set", string(e))
 }
 
 func panic2error(r interface{}) error {

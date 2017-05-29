@@ -40,7 +40,7 @@ func typeOf(v interface{}) DataType {
 	case bool:
 		return Boolean
 	}
-	panic(InvalidValueError(v))
+	panic(InvalidValueError{v})
 }
 
 /************************************************************************/
