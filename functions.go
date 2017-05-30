@@ -13,20 +13,31 @@ import (
 	"github.com/santhosh-tekuri/dom"
 )
 
+// Arg defines the signature of a function argument.
+// It encapsulates:
+// - dataType of argument
+// - cardinality of argument
 type Arg int
 
+// Mandatory creates function argument which is mandatory
+// of given type.
 func Mandatory(t DataType) Arg {
 	return Arg(t)
 }
 
+// Optional creates function argument which is optional
+// of given type.
 func Optional(t DataType) Arg {
 	return Arg(int(t) + 10)
 }
 
+// Variadic creates function argument which is variadic
+// of given type.
 func Variadic(t DataType) Arg {
 	return Arg(int(t) + 20)
 }
 
+// Args represents the signature of function arguments.
 type Args []Arg
 
 func (a Args) canAccept(nArgs int) bool {
@@ -79,14 +90,15 @@ func (a Args) variadic() bool {
 	return len(a) > 0 && a[len(a)-1]/10 == 2
 }
 
-var a = Args{Mandatory(String), Optional(String), Variadic(String)}
-
+// Function encapsulates all information required
+// to compile an xpath function call
 type Function struct {
 	Returns DataType
 	Args    Args
 	Compile func(f *Function, args []Expr) Expr
 }
 
+// CompileFunc returns a function which compiles given impl to an xpath expression
 func CompileFunc(impl func(args []interface{}) interface{}) func(f *Function, args []Expr) Expr {
 	return func(f *Function, args []Expr) Expr {
 		return &funcCall{args, f.Returns, impl}

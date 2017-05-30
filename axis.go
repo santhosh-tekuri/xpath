@@ -329,6 +329,11 @@ func childrenOrSelfIter(n dom.Node) *reverseIter {
 
 /************************************************************************/
 
+// Parent returns parent of given dom.Node as per xpath specification.
+//
+// unlike dom specification:
+// - the element is the parent of each of these attribute nodes.
+// - The element is the parent of each of these namespace nodes.
 func Parent(n dom.Node) dom.Node {
 	switch n := n.(type) {
 	case *dom.Attr:

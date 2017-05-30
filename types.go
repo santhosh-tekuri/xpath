@@ -13,13 +13,23 @@ import (
 	"github.com/santhosh-tekuri/dom"
 )
 
+// A DataType specifies the type of the value a xpath expression evaluates to.
 type DataType int
 
 const (
+	// Unknown means the actual type cannot be statically determined.
 	Unknown DataType = iota
+
+	// NodeSet represents type []dom.Node.
 	NodeSet
+
+	// String represents type string.
 	String
+
+	// Number represents type float64.
 	Number
+
+	// Boolean represents type bool.
 	Boolean
 )
 
@@ -29,6 +39,7 @@ func (r DataType) String() string {
 	return resultTypeNames[r]
 }
 
+// TypeOf returns xpath type of given value.
 func TypeOf(v interface{}) DataType {
 	switch v.(type) {
 	case []dom.Node:
@@ -45,6 +56,9 @@ func TypeOf(v interface{}) DataType {
 
 /************************************************************************/
 
+// Value2String converts given value to a string.
+// The value must be []dom.Node, string, float64 or boolean.
+// See https://www.w3.org/TR/xpath/#function-string.
 func Value2String(v interface{}) string {
 	switch v := v.(type) {
 	case []dom.Node:
@@ -73,6 +87,9 @@ func Value2String(v interface{}) string {
 	panic(fmt.Sprintf("%T is not valid xpath data-type", v))
 }
 
+// Value2Number converts given value to a float64.
+// The value must be []dom.Node, string, float64 or boolean.
+// See https://www.w3.org/TR/xpath/#function-number.
 func Value2Number(v interface{}) float64 {
 	switch v := v.(type) {
 	case []dom.Node:
@@ -90,6 +107,9 @@ func Value2Number(v interface{}) float64 {
 	panic(fmt.Sprintf("%T is not valid xpath data-type", v))
 }
 
+// Value2Boolean converts given value to a bool.
+// The value must be []dom.Node, string, float64 or boolean.
+// See https://www.w3.org/TR/xpath/#function-boolean.
 func Value2Boolean(v interface{}) bool {
 	switch v := v.(type) {
 	case []dom.Node:
@@ -104,6 +124,8 @@ func Value2Boolean(v interface{}) bool {
 	panic(fmt.Sprintf("%T is not valid xpath data-type", v))
 }
 
+// Value2Expr returns literal Expr for given value.
+// The value must be string, float64 or bool.
 func Value2Expr(v interface{}) Expr {
 	switch v := v.(type) {
 	case string:
@@ -118,6 +140,8 @@ func Value2Expr(v interface{}) Expr {
 
 /************************************************************************/
 
+// Node2String returns string value of the node.
+// See https://www.w3.org/TR/xpath/#dt-string-value.
 func Node2String(n dom.Node) string {
 	switch n := n.(type) {
 	case *dom.Comment:
@@ -137,12 +161,14 @@ func Node2String(n dom.Node) string {
 	}
 }
 
+// Node2Number returns the string value of the node converted to float64.
 func Node2Number(n dom.Node) float64 {
 	return String2Number(Node2String(n))
 }
 
 /************************************************************************/
 
+// String2Number converts the string value to float64
 func String2Number(s string) float64 {
 	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {
@@ -161,6 +187,7 @@ func collectText(n dom.Node, buf *bytes.Buffer) {
 	}
 }
 
+// ClarkName returns local if uri is empty, otherwise `{uri}local`.
 func ClarkName(uri, local string) string {
 	if uri == "" {
 		return local
