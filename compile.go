@@ -261,6 +261,81 @@ func asBoolean(expr Expr) Expr {
 
 /************************************************************************/
 
+func alwaysTrue(dom.Node) bool {
+	return true
+}
+
+func isElement(n dom.Node) bool {
+	_, ok := n.(*dom.Element)
+	return ok
+}
+
+func isComment(n dom.Node) bool {
+	_, ok := n.(*dom.Comment)
+	return ok
+}
+
+func isText(n dom.Node) bool {
+	_, ok := n.(*dom.Text)
+	return ok
+}
+
+func isProcInst(name string) func(dom.Node) bool {
+	return func(n dom.Node) bool {
+		if n, ok := n.(*dom.ProcInst); ok {
+			return name == "" || name == n.Target
+		}
+		return false
+	}
+}
+
+func testElementNS(uri string) func(dom.Node) bool {
+	return func(n dom.Node) bool {
+		if n, ok := n.(*dom.Element); ok {
+			return n.URI == uri
+		}
+		return false
+	}
+}
+
+func testElementName(uri, local string) func(dom.Node) bool {
+	return func(n dom.Node) bool {
+		if n, ok := n.(*dom.Element); ok {
+			return n.URI == uri && n.Local == local
+		}
+		return false
+	}
+}
+
+func testAttrNs(uri string) func(dom.Node) bool {
+	return func(n dom.Node) bool {
+		if n, ok := n.(*dom.Attr); ok {
+			return n.URI == uri
+		}
+		return false
+	}
+}
+
+func testAttrName(uri, local string) func(dom.Node) bool {
+	return func(n dom.Node) bool {
+		if n, ok := n.(*dom.Attr); ok {
+			return n.URI == uri && n.Local == local
+		}
+		return false
+	}
+}
+
+func testNamespaceName(uri, local string) func(dom.Node) bool {
+	return func(n dom.Node) bool {
+		if n, ok := n.(*dom.NameSpace); ok {
+			return uri == "" && n.Prefix == local
+		}
+		return false
+	}
+}
+
+/************************************************************************/
+
 type negateExpr struct {
 	arg Expr
 }
