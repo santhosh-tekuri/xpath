@@ -167,7 +167,7 @@ func (c *Compiler) compilePredicates(predicates []xpath.Expr) []Expr {
 }
 
 type Expr interface {
-	ResultType() DataType
+	Returns() DataType
 	Eval(ctx *Context) interface{}
 }
 
@@ -175,7 +175,7 @@ type Expr interface {
 
 type numberVal float64
 
-func (numberVal) ResultType() DataType {
+func (numberVal) Returns() DataType {
 	return Number
 }
 
@@ -185,7 +185,7 @@ func (e numberVal) Eval(ctx *Context) interface{} {
 
 type stringVal string
 
-func (stringVal) ResultType() DataType {
+func (stringVal) Returns() DataType {
 	return String
 }
 
@@ -195,7 +195,7 @@ func (e stringVal) Eval(ctx *Context) interface{} {
 
 type booleanVal bool
 
-func (booleanVal) ResultType() DataType {
+func (booleanVal) Returns() DataType {
 	return Boolean
 }
 
@@ -208,28 +208,28 @@ func (e booleanVal) Eval(ctx *Context) interface{} {
 func asNodeSet(e Expr) Expr {
 	if v, ok := e.(*variable); ok {
 		v.returns = NodeSet
-	} else if e.ResultType() != NodeSet {
+	} else if e.Returns() != NodeSet {
 		panic("node-set expected")
 	}
 	return e
 }
 
 func asString(expr Expr) Expr {
-	if expr.ResultType() == String {
+	if expr.Returns() == String {
 		return expr
 	}
 	return &stringFunc{expr}
 }
 
 func asNumber(expr Expr) Expr {
-	if expr.ResultType() == Number {
+	if expr.Returns() == Number {
 		return expr
 	}
 	return &numberFunc{expr}
 }
 
 func asBoolean(expr Expr) Expr {
-	if expr.ResultType() == Boolean {
+	if expr.Returns() == Boolean {
 		return expr
 	}
 	return &booleanFunc{expr}
@@ -241,7 +241,7 @@ type negateExpr struct {
 	arg Expr
 }
 
-func (*negateExpr) ResultType() DataType {
+func (*negateExpr) Returns() DataType {
 	return Number
 }
 
@@ -275,7 +275,7 @@ type arithmeticExpr struct {
 	apply func(float64, float64) float64
 }
 
-func (*arithmeticExpr) ResultType() DataType {
+func (*arithmeticExpr) Returns() DataType {
 	return Number
 }
 
@@ -300,7 +300,7 @@ type equalityExpr struct {
 	apply func(interface{}, interface{}) bool
 }
 
-func (*equalityExpr) ResultType() DataType {
+func (*equalityExpr) Returns() DataType {
 	return Boolean
 }
 
@@ -382,7 +382,7 @@ type relationalExpr struct {
 	apply func(float64, float64) bool
 }
 
-func (*relationalExpr) ResultType() DataType {
+func (*relationalExpr) Returns() DataType {
 	return Boolean
 }
 
@@ -432,7 +432,7 @@ type logicalExpr struct {
 	lhsValue bool
 }
 
-func (*logicalExpr) ResultType() DataType {
+func (*logicalExpr) Returns() DataType {
 	return Boolean
 }
 
@@ -450,7 +450,7 @@ type unionExpr struct {
 	rhs Expr
 }
 
-func (*unionExpr) ResultType() DataType {
+func (*unionExpr) Returns() DataType {
 	return NodeSet
 }
 
@@ -477,7 +477,7 @@ type locationPath struct {
 	steps []*step
 }
 
-func (*locationPath) ResultType() DataType {
+func (*locationPath) Returns() DataType {
 	return NodeSet
 }
 
@@ -568,7 +568,7 @@ type filterExpr struct {
 	predicates []Expr
 }
 
-func (*filterExpr) ResultType() DataType {
+func (*filterExpr) Returns() DataType {
 	return NodeSet
 }
 
@@ -583,7 +583,7 @@ type pathExpr struct {
 	locationPath *locationPath
 }
 
-func (*pathExpr) ResultType() DataType {
+func (*pathExpr) Returns() DataType {
 	return NodeSet
 }
 
@@ -599,7 +599,7 @@ type variable struct {
 	returns DataType
 }
 
-func (v *variable) ResultType() DataType {
+func (v *variable) Returns() DataType {
 	return v.returns
 }
 
@@ -628,7 +628,7 @@ type funcCall struct {
 	impl    func(args []interface{}) interface{}
 }
 
-func (f *funcCall) ResultType() DataType {
+func (f *funcCall) Returns() DataType {
 	return f.returns
 }
 

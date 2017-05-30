@@ -258,7 +258,7 @@ var coreFunctions = map[string]*Function{
 
 type ContextExpr struct{}
 
-func (ContextExpr) ResultType() DataType {
+func (ContextExpr) Returns() DataType {
 	return NodeSet
 }
 
@@ -272,7 +272,7 @@ type numberFunc struct {
 	arg Expr
 }
 
-func (*numberFunc) ResultType() DataType {
+func (*numberFunc) Returns() DataType {
 	return Number
 }
 
@@ -286,7 +286,7 @@ type booleanFunc struct {
 	arg Expr
 }
 
-func (*booleanFunc) ResultType() DataType {
+func (*booleanFunc) Returns() DataType {
 	return Boolean
 }
 
@@ -300,7 +300,7 @@ type stringFunc struct {
 	arg Expr
 }
 
-func (*stringFunc) ResultType() DataType {
+func (*stringFunc) Returns() DataType {
 	return String
 }
 
@@ -312,7 +312,7 @@ func (e *stringFunc) Eval(ctx *Context) interface{} {
 
 type position struct{}
 
-func (position) ResultType() DataType {
+func (position) Returns() DataType {
 	return Number
 }
 
@@ -324,7 +324,7 @@ func (position) Eval(ctx *Context) interface{} {
 
 type last struct{}
 
-func (last) ResultType() DataType {
+func (last) Returns() DataType {
 	return Number
 }
 
@@ -338,7 +338,7 @@ type count struct {
 	arg Expr
 }
 
-func (*count) ResultType() DataType {
+func (*count) Returns() DataType {
 	return Number
 }
 
@@ -352,7 +352,7 @@ type sum struct {
 	arg Expr
 }
 
-func (*sum) ResultType() DataType {
+func (*sum) Returns() DataType {
 	return Number
 }
 
@@ -370,7 +370,7 @@ type localName struct {
 	arg Expr
 }
 
-func (*localName) ResultType() DataType {
+func (*localName) Returns() DataType {
 	return String
 }
 
@@ -397,7 +397,7 @@ type namespaceURI struct {
 	arg Expr
 }
 
-func (*namespaceURI) ResultType() DataType {
+func (*namespaceURI) Returns() DataType {
 	return String
 }
 
@@ -420,7 +420,7 @@ type qname struct {
 	arg Expr
 }
 
-func (*qname) ResultType() DataType {
+func (*qname) Returns() DataType {
 	return String
 }
 
@@ -447,7 +447,7 @@ type normalizeSpace struct {
 	arg Expr
 }
 
-func (*normalizeSpace) ResultType() DataType {
+func (*normalizeSpace) Returns() DataType {
 	return String
 }
 
@@ -493,7 +493,7 @@ type startsWith struct {
 	prefix Expr
 }
 
-func (*startsWith) ResultType() DataType {
+func (*startsWith) Returns() DataType {
 	return Boolean
 }
 
@@ -508,7 +508,7 @@ type endsWith struct {
 	prefix Expr
 }
 
-func (*endsWith) ResultType() DataType {
+func (*endsWith) Returns() DataType {
 	return Boolean
 }
 
@@ -523,7 +523,7 @@ type contains struct {
 	substr Expr
 }
 
-func (*contains) ResultType() DataType {
+func (*contains) Returns() DataType {
 	return Boolean
 }
 
@@ -537,7 +537,7 @@ type stringLength struct {
 	str Expr
 }
 
-func (*stringLength) ResultType() DataType {
+func (*stringLength) Returns() DataType {
 	return Number
 }
 
@@ -551,7 +551,7 @@ type concat struct {
 	args []Expr
 }
 
-func (*concat) ResultType() DataType {
+func (*concat) Returns() DataType {
 	return String
 }
 
@@ -571,7 +571,7 @@ type translate struct {
 	to   Expr
 }
 
-func (*translate) ResultType() DataType {
+func (*translate) Returns() DataType {
 	return String
 }
 
@@ -616,7 +616,7 @@ type substringBefore struct {
 	match Expr
 }
 
-func (*substringBefore) ResultType() DataType {
+func (*substringBefore) Returns() DataType {
 	return String
 }
 
@@ -635,7 +635,7 @@ type substringAfter struct {
 	match Expr
 }
 
-func (*substringAfter) ResultType() DataType {
+func (*substringAfter) Returns() DataType {
 	return String
 }
 
@@ -656,7 +656,7 @@ type substring struct {
 	length Expr
 }
 
-func (*substring) ResultType() DataType {
+func (*substring) Returns() DataType {
 	return String
 }
 
@@ -726,7 +726,7 @@ type not struct {
 	arg Expr
 }
 
-func (*not) ResultType() DataType {
+func (*not) Returns() DataType {
 	return Boolean
 }
 
@@ -740,7 +740,7 @@ type lang struct {
 	lang Expr
 }
 
-func (*lang) ResultType() DataType {
+func (*lang) Returns() DataType {
 	return Boolean
 }
 
@@ -775,7 +775,7 @@ type floor struct {
 	num Expr
 }
 
-func (*floor) ResultType() DataType {
+func (*floor) Returns() DataType {
 	return Number
 }
 
@@ -789,7 +789,7 @@ type ceiling struct {
 	num Expr
 }
 
-func (*ceiling) ResultType() DataType {
+func (*ceiling) Returns() DataType {
 	return Number
 }
 
@@ -803,7 +803,7 @@ type round struct {
 	num Expr
 }
 
-func (*round) ResultType() DataType {
+func (*round) Returns() DataType {
 	return Number
 }
 
