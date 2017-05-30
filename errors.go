@@ -28,6 +28,12 @@ func (e UnresolvedFunctionError) Error() string {
 	return fmt.Sprintf("unresolved function: %s", string(e))
 }
 
+type SignatureError string
+
+func (e SignatureError) Error() string {
+	return fmt.Sprintf("function %s has invalid argument signature", string(e))
+}
+
 type ArgCountError string
 
 func (e ArgCountError) Error() string {

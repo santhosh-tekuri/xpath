@@ -40,26 +40,27 @@ func (a Args) typeOf(i int) DataType {
 	return DataType(a[i] % 10)
 }
 
-func (a Args) validate() {
+func (a Args) valid() bool {
 	prev := 0
 	for _, arg := range a {
 		div := int(arg) / 10
 		switch div {
 		case 0:
 			if prev != 0 {
-				panic("invalid signature")
+				return false
 			}
 		case 1:
 			if prev != 0 && prev != 1 {
-				panic("invalid signature")
+				return false
 			}
 		case 2:
 			if prev >= 2 {
-				panic("invalid signature")
+				return false
 			}
 		}
 		prev = div
 	}
+	return true
 }
 
 func (a Args) mandatory() int {

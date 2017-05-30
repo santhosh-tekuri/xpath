@@ -121,15 +121,18 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 		}
 		if function == nil {
 			if e.Prefix == "" {
-				function = coreFunctions[e.Local]
+				function = coreFunctions[fname]
 			}
 		}
 		if function == nil {
-			panic(UnresolvedFunctionError(e.Local))
+			panic(UnresolvedFunctionError(fname))
 		}
 
+		if !function.Args.valid() {
+			panic(SignatureError(fname))
+		}
 		if !function.Args.canAccept(len(e.Args)) {
-			panic(ArgCountError(e.Local))
+			panic(ArgCountError(fname))
 		}
 		var args []Expr
 		if len(e.Args) > 0 {
