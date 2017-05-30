@@ -323,8 +323,9 @@ func (e *equalityExpr) eval(ctx *Context) interface{} {
 		lhs, rhs := lhs.([]dom.Node), rhs.([]dom.Node)
 		if len(lhs) > 0 && len(rhs) > 0 {
 			for _, n1 := range lhs {
+				n1Str := node2string(n1)
 				for _, n2 := range rhs {
-					if e.apply(n1, n2) {
+					if e.apply(n1Str, node2string(n2)) {
 						return true
 					}
 				}
@@ -404,8 +405,9 @@ func (e *relationalExpr) eval(ctx *Context) interface{} {
 		lhs, rhs := lhs.([]dom.Node), rhs.([]dom.Node)
 		if len(lhs) > 0 && len(rhs) > 0 {
 			for _, n1 := range lhs {
+				n1Num := node2number(n1)
 				for _, n2 := range rhs {
-					if e.apply(node2number(n1), node2number(n2)) {
+					if e.apply(n1Num, node2number(n2)) {
 						return true
 					}
 				}

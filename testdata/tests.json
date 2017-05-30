@@ -1209,5 +1209,81 @@
         "count(//shipTo | //billTo | //item | //items/*)": 4.0
       }
     }
+  },
+  "sample.xml": {
+    "/": {
+      "namespaces": {
+        "ns": "http://mysoap"
+      },
+      "xpaths": {
+        "/root/pub[ book[ name ]]/book": [
+          "/root[1]/pub[1]/book[1]",
+          "/root[1]/pub[1]/book[2]",
+          "/root[1]/pub[1]/book[3]"
+        ],
+        "/root/pub/book[ pub[ book[ name ]]]": [
+          "/root[1]/pub[1]/book[3]"
+        ],
+        "/root/pub[ book ]/book[ pub[ book[ name ]]]": [
+          "/root[1]/pub[1]/book[3]"
+        ],
+        "/root/pub[ book[ pub[ book[ name ]]]]/book[ pub[ book[ name ]]]": [
+          "/root[1]/pub[1]/book[3]"
+        ],
+        "//book[price]": [
+          "/root[1]/pub[1]/book[1]",
+          "/root[1]/pub[1]/book[2]",
+          "/root[1]/pub[1]/book[3]"
+        ],
+        "/root/pub/book[ price < 100 and pub[ year = 1999 and book[ author = 'AuthorZ' and name ]]]": [
+          "/root[1]/pub[1]/book[3]"
+        ],
+        "//pub/book[price[@type = 'discount'] = 12]": [
+          "/root[1]/pub[1]/book[3]"
+        ],
+        "//Item[Price[@symbol='$']=200]": [
+          "/root[1]/XMLFragment2[1]/ns:Envelope[1]/Body[2]/Order[2]/Detail[1]/Item[2]"
+        ]
+      }
+    }
+  },
+  "t.xml": {
+    "/": {
+      "xpaths": {
+        "//following-sibling::node()": [
+          "/root[1]/name[1]"
+        ]
+      }
+    }
+  },
+  "library.xml": {
+    "/": {
+      "xpaths": {
+        "//book[author = editor]/price": [
+          "/library[1]/book[1]/price[1]",
+          "/library[1]/book[2]/price[1]",
+          "/library[1]/book[3]/price[1]",
+          "/library[1]/book[7]/price[1]",
+          "/library[1]/book[7]/book[1]/price[1]",
+          "/library[1]/book[7]/book[2]/price[1]",
+          "/library[1]/book[7]/book[3]/price[1]"
+        ],
+        "//book/price": [
+          "/library[1]/book[1]/price[1]",
+          "/library[1]/book[2]/price[1]",
+          "/library[1]/book[3]/price[1]",
+          "/library[1]/book[4]/price[1]",
+          "/library[1]/book[5]/price[1]",
+          "/library[1]/book[6]/price[1]",
+          "/library[1]/book[7]/price[1]",
+          "/library[1]/book[7]/book[1]/price[1]",
+          "/library[1]/book[7]/book[2]/price[1]",
+          "/library[1]/book[7]/book[3]/price[1]",
+          "/library[1]/book[7]/book[4]/price[1]",
+          "/library[1]/book[7]/book[5]/price[1]",
+          "/library[1]/book[7]/book[6]/price[1]"
+        ]
+      }
+    }
   }
 }
