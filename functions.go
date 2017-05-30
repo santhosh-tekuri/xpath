@@ -18,7 +18,7 @@ type Function struct {
 	Args      []DataType
 	Mandatory int
 	Variadic  bool
-	Impl      func(ctx *Context, args []interface{}) interface{}
+	Compile   func(f *Function, args []Expr) Expr
 }
 
 func (f *Function) canAccept(nArgs int) bool {
@@ -32,168 +32,214 @@ func (f *Function) argType(i int) DataType {
 	return f.Args[len(f.Args)-1]
 }
 
-var coreFunctions = map[string]*Function{
-	"string":           {String, []DataType{Unknown}, 0, false, nil},
-	"boolean":          {Boolean, []DataType{Unknown}, 0, false, nil},
-	"name":             {String, []DataType{NodeSet}, 0, false, nil},
-	"local-name":       {String, []DataType{NodeSet}, 0, false, nil},
-	"namespace-uri":    {String, []DataType{NodeSet}, 0, false, nil},
-	"position":         {Number, nil, 0, false, nil},
-	"last":             {Number, nil, 0, false, nil},
-	"count":            {Number, []DataType{NodeSet}, 1, false, nil},
-	"sum":              {Number, []DataType{NodeSet}, 1, false, nil},
-	"normalize-space":  {String, []DataType{String}, 0, false, nil},
-	"string-length":    {Number, []DataType{String}, 0, false, nil},
-	"starts-with":      {Boolean, []DataType{String, String}, 2, false, nil},
-	"ends-with":        {Boolean, []DataType{String, String}, 2, false, nil},
-	"contains":         {Boolean, []DataType{String, String}, 2, false, nil},
-	"concat":           {String, []DataType{String, String}, 2, true, nil},
-	"translate":        {String, []DataType{String, String, String}, 3, false, nil},
-	"substring":        {String, []DataType{String, Number, Number}, 2, false, nil},
-	"substring-before": {String, []DataType{String, String}, 2, false, nil},
-	"substring-after":  {String, []DataType{String, String}, 2, false, nil},
-	"true":             {Boolean, nil, 0, false, nil},
-	"false":            {Boolean, nil, 0, false, nil},
-	"not":              {Boolean, []DataType{Boolean}, 1, false, nil},
-	"lang":             {Boolean, []DataType{String}, 1, false, nil},
+func CompileFunc(impl func(args []interface{}) interface{}) func(f *Function, args []Expr) Expr {
+	return func(f *Function, args []Expr) Expr {
+		return &funcCall{args, f.Returns, impl}
+	}
 }
 
-func coreFunction(name string, args []expr) expr {
-	switch name {
-	case "string":
-		if len(args) == 0 {
-			return &stringFunc{contextExpr{}}
-		}
-		return &stringFunc{args[0]}
-	case "boolean":
-		return &booleanFunc{args[0]}
-	case "name":
-		if len(args) == 0 {
-			return &qname{contextExpr{}}
-		}
-		return &qname{args[0]}
-	case "local-name":
-		if len(args) == 0 {
-			return &localName{contextExpr{}}
-		}
-		return &localName{args[0]}
-	case "namespace-uri":
-		if len(args) == 0 {
-			return &namespaceURI{contextExpr{}}
-		}
-		return &namespaceURI{args[0]}
-	case "normalize-space":
-		if len(args) == 0 {
-			return &normalizeSpace{asString(contextExpr{})}
-		}
-		return &normalizeSpace{args[0]}
-	case "string-length":
-		if len(args) == 0 {
-			return &stringLength{asString(contextExpr{})}
-		}
-		return &stringLength{args[0]}
-	case "substring":
-		if len(args) == 3 {
-			return &substring{args[0], args[1], args[2]}
-		}
-		return &substring{args[0], args[1], nil}
-	case "substring-before":
-		return &substringBefore{args[0], args[1]}
-	case "substring-after":
-		return &substringAfter{args[0], args[1]}
-	case "position":
-		return &position{}
-	case "last":
-		return &last{}
-	case "true":
-		return booleanVal(true)
-	case "false":
-		return booleanVal(false)
-	case "count":
-		return &count{args[0]}
-	case "sum":
-		return &sum{args[0]}
-	case "not":
-		return &not{args[0]}
-	case "lang":
-		return &lang{args[0]}
-	case "starts-with":
-		return &startsWith{args[0], args[1]}
-	case "ends-with":
-		return &endsWith{args[0], args[1]}
-	case "contains":
-		return &contains{args[0], args[1]}
-	case "concat":
-		return &concat{args}
-	case "translate":
-		return &translate{args[0], args[1], args[2]}
-	}
-	return nil
+var coreFunctions = map[string]*Function{
+	"string": {
+		String, []DataType{Unknown}, 0, false,
+		func(f *Function, args []Expr) Expr {
+			if len(args) == 0 {
+				return &stringFunc{ContextExpr{}}
+			}
+			return &stringFunc{args[0]}
+		}},
+	"boolean": {
+		Boolean, []DataType{Unknown}, 0, false,
+		func(f *Function, args []Expr) Expr {
+			return &booleanFunc{args[0]}
+		}},
+	"name": {
+		String, []DataType{NodeSet}, 0, false,
+		func(f *Function, args []Expr) Expr {
+			if len(args) == 0 {
+				return &qname{ContextExpr{}}
+			}
+			return &qname{args[0]}
+		}},
+	"local-name": {
+		String, []DataType{NodeSet}, 0, false,
+		func(f *Function, args []Expr) Expr {
+			if len(args) == 0 {
+				return &localName{ContextExpr{}}
+			}
+			return &localName{args[0]}
+		}},
+	"namespace-uri": {
+		String, []DataType{NodeSet}, 0, false,
+		func(f *Function, args []Expr) Expr {
+			if len(args) == 0 {
+				return &namespaceURI{ContextExpr{}}
+			}
+			return &namespaceURI{args[0]}
+		}},
+	"position": {
+		Number, nil, 0, false,
+		func(f *Function, args []Expr) Expr {
+			return &position{}
+		}},
+	"last": {
+		Number, nil, 0, false,
+		func(f *Function, args []Expr) Expr {
+			return &last{}
+		}},
+	"count": {
+		Number, []DataType{NodeSet}, 1, false,
+		func(f *Function, args []Expr) Expr {
+			return &count{args[0]}
+		}},
+	"sum": {
+		Number, []DataType{NodeSet}, 1, false,
+		func(f *Function, args []Expr) Expr {
+			return &sum{args[0]}
+		}},
+	"normalize-space": {
+		String, []DataType{String}, 0, false,
+		func(f *Function, args []Expr) Expr {
+			if len(args) == 0 {
+				return &normalizeSpace{asString(ContextExpr{})}
+			}
+			return &normalizeSpace{args[0]}
+		}},
+	"string-length": {
+		Number, []DataType{String}, 0, false,
+		func(f *Function, args []Expr) Expr {
+			if len(args) == 0 {
+				return &stringLength{asString(ContextExpr{})}
+			}
+			return &stringLength{args[0]}
+		}},
+	"starts-with": {
+		Boolean, []DataType{String, String}, 2, false,
+		func(f *Function, args []Expr) Expr {
+			return &startsWith{args[0], args[1]}
+		}},
+	"ends-with": {
+		Boolean, []DataType{String, String}, 2, false,
+		func(f *Function, args []Expr) Expr {
+			return &endsWith{args[0], args[1]}
+		}},
+	"contains": {
+		Boolean, []DataType{String, String}, 2, false,
+		func(f *Function, args []Expr) Expr {
+			return &contains{args[0], args[1]}
+		}},
+	"concat": {
+		String, []DataType{String, String}, 2, true,
+		func(f *Function, args []Expr) Expr {
+			return &concat{args}
+		}},
+	"translate": {
+		String, []DataType{String, String, String}, 3, false,
+		func(f *Function, args []Expr) Expr {
+			return &translate{args[0], args[1], args[2]}
+		}},
+	"substring": {
+		String, []DataType{String, Number, Number}, 2, false,
+		func(f *Function, args []Expr) Expr {
+			if len(args) == 3 {
+				return &substring{args[0], args[1], args[2]}
+			}
+			return &substring{args[0], args[1], nil}
+		}},
+	"substring-before": {
+		String, []DataType{String, String}, 2, false,
+		func(f *Function, args []Expr) Expr {
+			return &substringBefore{args[0], args[1]}
+		}},
+	"substring-after": {
+		String, []DataType{String, String}, 2, false,
+		func(f *Function, args []Expr) Expr {
+			return &substringAfter{args[0], args[1]}
+		}},
+	"true": {
+		Boolean, nil, 0, false,
+		func(f *Function, args []Expr) Expr {
+			return booleanVal(true)
+		}},
+	"false": {
+		Boolean, nil, 0, false,
+		func(f *Function, args []Expr) Expr {
+			return booleanVal(false)
+		}},
+	"not": {
+		Boolean, []DataType{Boolean}, 1, false,
+		func(f *Function, args []Expr) Expr {
+			return &not{args[0]}
+		}},
+	"lang": {
+		Boolean, []DataType{String}, 1, false,
+		func(f *Function, args []Expr) Expr {
+			return &lang{args[0]}
+		}},
 }
 
 /************************************************************************/
 
-type contextExpr struct{}
+type ContextExpr struct{}
 
-func (contextExpr) resultType() DataType {
+func (ContextExpr) ResultType() DataType {
 	return NodeSet
 }
 
-func (contextExpr) eval(ctx *Context) interface{} {
+func (ContextExpr) Eval(ctx *Context) interface{} {
 	return []dom.Node{ctx.Node}
 }
 
 /************************************************************************/
 
 type numberFunc struct {
-	arg expr
+	arg Expr
 }
 
-func (*numberFunc) resultType() DataType {
+func (*numberFunc) ResultType() DataType {
 	return Number
 }
 
-func (f *numberFunc) eval(ctx *Context) interface{} {
-	return Value2Number(f.arg.eval(ctx))
+func (f *numberFunc) Eval(ctx *Context) interface{} {
+	return Value2Number(f.arg.Eval(ctx))
 }
 
 /************************************************************************/
 
 type booleanFunc struct {
-	arg expr
+	arg Expr
 }
 
-func (*booleanFunc) resultType() DataType {
+func (*booleanFunc) ResultType() DataType {
 	return Boolean
 }
 
-func (f *booleanFunc) eval(ctx *Context) interface{} {
-	return Value2Boolean(f.arg.eval(ctx))
+func (f *booleanFunc) Eval(ctx *Context) interface{} {
+	return Value2Boolean(f.arg.Eval(ctx))
 }
 
 /************************************************************************/
 
 type stringFunc struct {
-	arg expr
+	arg Expr
 }
 
-func (*stringFunc) resultType() DataType {
+func (*stringFunc) ResultType() DataType {
 	return String
 }
 
-func (e *stringFunc) eval(ctx *Context) interface{} {
-	return Value2String(e.arg.eval(ctx))
+func (e *stringFunc) Eval(ctx *Context) interface{} {
+	return Value2String(e.arg.Eval(ctx))
 }
 
 /************************************************************************/
 
 type position struct{}
 
-func (position) resultType() DataType {
+func (position) ResultType() DataType {
 	return Number
 }
 
-func (position) eval(ctx *Context) interface{} {
+func (position) Eval(ctx *Context) interface{} {
 	return float64(ctx.Pos)
 }
 
@@ -201,41 +247,41 @@ func (position) eval(ctx *Context) interface{} {
 
 type last struct{}
 
-func (last) resultType() DataType {
+func (last) ResultType() DataType {
 	return Number
 }
 
-func (last) eval(ctx *Context) interface{} {
+func (last) Eval(ctx *Context) interface{} {
 	return float64(ctx.Size)
 }
 
 /************************************************************************/
 
 type count struct {
-	arg expr
+	arg Expr
 }
 
-func (*count) resultType() DataType {
+func (*count) ResultType() DataType {
 	return Number
 }
 
-func (e *count) eval(ctx *Context) interface{} {
-	return float64(len(e.arg.eval(ctx).([]dom.Node)))
+func (e *count) Eval(ctx *Context) interface{} {
+	return float64(len(e.arg.Eval(ctx).([]dom.Node)))
 }
 
 /************************************************************************/
 
 type sum struct {
-	arg expr
+	arg Expr
 }
 
-func (*sum) resultType() DataType {
+func (*sum) ResultType() DataType {
 	return Number
 }
 
-func (e *sum) eval(ctx *Context) interface{} {
+func (e *sum) Eval(ctx *Context) interface{} {
 	var r float64
-	for _, n := range e.arg.eval(ctx).([]dom.Node) {
+	for _, n := range e.arg.Eval(ctx).([]dom.Node) {
 		r += Node2Number(n)
 	}
 	return r
@@ -244,15 +290,15 @@ func (e *sum) eval(ctx *Context) interface{} {
 /************************************************************************/
 
 type localName struct {
-	arg expr
+	arg Expr
 }
 
-func (*localName) resultType() DataType {
+func (*localName) ResultType() DataType {
 	return String
 }
 
-func (e *localName) eval(ctx *Context) interface{} {
-	ns := e.arg.eval(ctx).([]dom.Node)
+func (e *localName) Eval(ctx *Context) interface{} {
+	ns := e.arg.Eval(ctx).([]dom.Node)
 	if len(ns) > 0 {
 		switch n := ns[0].(type) {
 		case *dom.Element:
@@ -271,15 +317,15 @@ func (e *localName) eval(ctx *Context) interface{} {
 /************************************************************************/
 
 type namespaceURI struct {
-	arg expr
+	arg Expr
 }
 
-func (*namespaceURI) resultType() DataType {
+func (*namespaceURI) ResultType() DataType {
 	return String
 }
 
-func (e *namespaceURI) eval(ctx *Context) interface{} {
-	ns := e.arg.eval(ctx).([]dom.Node)
+func (e *namespaceURI) Eval(ctx *Context) interface{} {
+	ns := e.arg.Eval(ctx).([]dom.Node)
 	if len(ns) > 0 {
 		switch n := ns[0].(type) {
 		case *dom.Element:
@@ -294,15 +340,15 @@ func (e *namespaceURI) eval(ctx *Context) interface{} {
 /************************************************************************/
 
 type qname struct {
-	arg expr
+	arg Expr
 }
 
-func (*qname) resultType() DataType {
+func (*qname) ResultType() DataType {
 	return String
 }
 
-func (e *qname) eval(ctx *Context) interface{} {
-	ns := e.arg.eval(ctx).([]dom.Node)
+func (e *qname) Eval(ctx *Context) interface{} {
+	ns := e.arg.Eval(ctx).([]dom.Node)
 	if len(ns) > 0 {
 		switch n := ns[0].(type) {
 		case *dom.Element:
@@ -321,15 +367,15 @@ func (e *qname) eval(ctx *Context) interface{} {
 /************************************************************************/
 
 type normalizeSpace struct {
-	arg expr
+	arg Expr
 }
 
-func (*normalizeSpace) resultType() DataType {
+func (*normalizeSpace) ResultType() DataType {
 	return String
 }
 
-func (e *normalizeSpace) eval(ctx *Context) interface{} {
-	buf := []byte(e.arg.eval(ctx).(string))
+func (e *normalizeSpace) Eval(ctx *Context) interface{} {
+	buf := []byte(e.arg.Eval(ctx).(string))
 	read, write, lastWrite := 0, 0, 0
 	wroteOne := false
 	for read < len(buf) {
@@ -366,76 +412,76 @@ func isSpace(b byte) bool {
 /************************************************************************/
 
 type startsWith struct {
-	str    expr
-	prefix expr
+	str    Expr
+	prefix Expr
 }
 
-func (*startsWith) resultType() DataType {
+func (*startsWith) ResultType() DataType {
 	return Boolean
 }
 
-func (e *startsWith) eval(ctx *Context) interface{} {
-	return strings.HasPrefix(e.str.eval(ctx).(string), e.prefix.eval(ctx).(string))
+func (e *startsWith) Eval(ctx *Context) interface{} {
+	return strings.HasPrefix(e.str.Eval(ctx).(string), e.prefix.Eval(ctx).(string))
 }
 
 /************************************************************************/
 
 type endsWith struct {
-	str    expr
-	prefix expr
+	str    Expr
+	prefix Expr
 }
 
-func (*endsWith) resultType() DataType {
+func (*endsWith) ResultType() DataType {
 	return Boolean
 }
 
-func (e *endsWith) eval(ctx *Context) interface{} {
-	return strings.HasSuffix(e.str.eval(ctx).(string), e.prefix.eval(ctx).(string))
+func (e *endsWith) Eval(ctx *Context) interface{} {
+	return strings.HasSuffix(e.str.Eval(ctx).(string), e.prefix.Eval(ctx).(string))
 }
 
 /************************************************************************/
 
 type contains struct {
-	str    expr
-	substr expr
+	str    Expr
+	substr Expr
 }
 
-func (*contains) resultType() DataType {
+func (*contains) ResultType() DataType {
 	return Boolean
 }
 
-func (e *contains) eval(ctx *Context) interface{} {
-	return strings.Contains(e.str.eval(ctx).(string), e.substr.eval(ctx).(string))
+func (e *contains) Eval(ctx *Context) interface{} {
+	return strings.Contains(e.str.Eval(ctx).(string), e.substr.Eval(ctx).(string))
 }
 
 /************************************************************************/
 
 type stringLength struct {
-	str expr
+	str Expr
 }
 
-func (*stringLength) resultType() DataType {
+func (*stringLength) ResultType() DataType {
 	return Number
 }
 
-func (e *stringLength) eval(ctx *Context) interface{} {
-	return float64(utf8.RuneCountInString(e.str.eval(ctx).(string)))
+func (e *stringLength) Eval(ctx *Context) interface{} {
+	return float64(utf8.RuneCountInString(e.str.Eval(ctx).(string)))
 }
 
 /************************************************************************/
 
 type concat struct {
-	args []expr
+	args []Expr
 }
 
-func (*concat) resultType() DataType {
+func (*concat) ResultType() DataType {
 	return String
 }
 
-func (e *concat) eval(ctx *Context) interface{} {
+func (e *concat) Eval(ctx *Context) interface{} {
 	buf := new(bytes.Buffer)
 	for _, arg := range e.args {
-		buf.WriteString(arg.eval(ctx).(string))
+		buf.WriteString(arg.Eval(ctx).(string))
 	}
 	return buf.String()
 }
@@ -443,18 +489,18 @@ func (e *concat) eval(ctx *Context) interface{} {
 /************************************************************************/
 
 type translate struct {
-	str  expr
-	from expr
-	to   expr
+	str  Expr
+	from Expr
+	to   Expr
 }
 
-func (*translate) resultType() DataType {
+func (*translate) ResultType() DataType {
 	return String
 }
 
-func (e *translate) eval(ctx *Context) interface{} {
-	from := []rune(e.from.eval(ctx).(string))
-	to := []rune(e.to.eval(ctx).(string))
+func (e *translate) Eval(ctx *Context) interface{} {
+	from := []rune(e.from.Eval(ctx).(string))
+	to := []rune(e.to.Eval(ctx).(string))
 	replace := make(map[rune]rune)
 	remove := make(map[rune]struct{})
 	for i, frune := range from {
@@ -471,7 +517,7 @@ func (e *translate) eval(ctx *Context) interface{} {
 		}
 	}
 
-	str := e.str.eval(ctx).(string)
+	str := e.str.Eval(ctx).(string)
 	buf := bytes.NewBuffer(make([]byte, 0, len(str)))
 	for _, r := range str {
 		if _, ok := remove[r]; ok {
@@ -489,17 +535,17 @@ func (e *translate) eval(ctx *Context) interface{} {
 /************************************************************************/
 
 type substringBefore struct {
-	str   expr
-	match expr
+	str   Expr
+	match Expr
 }
 
-func (*substringBefore) resultType() DataType {
+func (*substringBefore) ResultType() DataType {
 	return String
 }
 
-func (e *substringBefore) eval(ctx *Context) interface{} {
-	str := e.str.eval(ctx).(string)
-	if i := strings.Index(str, e.match.eval(ctx).(string)); i != -1 {
+func (e *substringBefore) Eval(ctx *Context) interface{} {
+	str := e.str.Eval(ctx).(string)
+	if i := strings.Index(str, e.match.Eval(ctx).(string)); i != -1 {
 		return str[:i]
 	}
 	return ""
@@ -508,17 +554,17 @@ func (e *substringBefore) eval(ctx *Context) interface{} {
 /************************************************************************/
 
 type substringAfter struct {
-	str   expr
-	match expr
+	str   Expr
+	match Expr
 }
 
-func (*substringAfter) resultType() DataType {
+func (*substringAfter) ResultType() DataType {
 	return String
 }
 
-func (e *substringAfter) eval(ctx *Context) interface{} {
-	str := e.str.eval(ctx).(string)
-	match := e.match.eval(ctx).(string)
+func (e *substringAfter) Eval(ctx *Context) interface{} {
+	str := e.str.Eval(ctx).(string)
+	match := e.match.Eval(ctx).(string)
 	if i := strings.Index(str, match); i != -1 {
 		return str[i+len(match):]
 	}
@@ -528,30 +574,30 @@ func (e *substringAfter) eval(ctx *Context) interface{} {
 /************************************************************************/
 
 type substring struct {
-	str    expr
-	from   expr
-	length expr
+	str    Expr
+	from   Expr
+	length Expr
 }
 
-func (*substring) resultType() DataType {
+func (*substring) ResultType() DataType {
 	return String
 }
 
-func (e *substring) eval(ctx *Context) interface{} {
-	str := e.str.eval(ctx).(string)
+func (e *substring) Eval(ctx *Context) interface{} {
+	str := e.str.Eval(ctx).(string)
 	strLength := utf8.RuneCountInString(str)
 	if strLength == 0 {
 		return ""
 	}
 
-	d1 := e.from.eval(ctx).(float64)
+	d1 := e.from.Eval(ctx).(float64)
 	if math.IsNaN(d1) {
 		return ""
 	}
 	start := round(d1) - 1
 	substrLength := strLength
 	if e.length != nil {
-		d2 := e.length.eval(ctx).(float64)
+		d2 := e.length.Eval(ctx).(float64)
 		if math.IsInf(d2, +1) {
 			substrLength = math.MaxInt16
 		} else if math.IsInf(d2, -1) {
@@ -600,29 +646,29 @@ func round(val float64) int {
 /************************************************************************/
 
 type not struct {
-	arg expr
+	arg Expr
 }
 
-func (*not) resultType() DataType {
+func (*not) ResultType() DataType {
 	return Boolean
 }
 
-func (e *not) eval(ctx *Context) interface{} {
-	return !e.arg.eval(ctx).(bool)
+func (e *not) Eval(ctx *Context) interface{} {
+	return !e.arg.Eval(ctx).(bool)
 }
 
 /************************************************************************/
 
 type lang struct {
-	lang expr
+	lang Expr
 }
 
-func (*lang) resultType() DataType {
+func (*lang) ResultType() DataType {
 	return Boolean
 }
 
-func (e *lang) eval(ctx *Context) interface{} {
-	lang := e.lang.eval(ctx).(string)
+func (e *lang) Eval(ctx *Context) interface{} {
+	lang := e.lang.Eval(ctx).(string)
 	n := ctx.Node
 	if _, ok := n.(*dom.Element); !ok {
 		n = n.Parent()

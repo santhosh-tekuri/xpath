@@ -12,7 +12,7 @@ import (
 	"github.com/santhosh-tekuri/xpath"
 )
 
-func (c *Compiler) compile(e xpath.Expr) expr {
+func (c *Compiler) compile(e xpath.Expr) Expr {
 	switch e := e.(type) {
 	case xpath.Number:
 		return numberVal(e)
@@ -119,10 +119,9 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		if c.Functions != nil {
 			function = c.Functions.resolve(fname)
 		}
-		coreFunc := false
 		if function == nil {
 			if e.Prefix == "" {
-				function, coreFunc = coreFunctions[e.Local]
+				function = coreFunctions[e.Local]
 			}
 		}
 		if function == nil {
@@ -132,9 +131,9 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 		if !function.canAccept(len(e.Args)) {
 			panic(ArgCountError(e.Local))
 		}
-		var args []expr
+		var args []Expr
 		if len(e.Args) > 0 {
-			args = make([]expr, len(e.Args))
+			args = make([]Expr, len(e.Args))
 			for i, arg := range e.Args {
 				arg := c.compile(arg)
 				switch function.argType(i) {
@@ -153,87 +152,84 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 				}
 			}
 		}
-		if coreFunc {
-			return coreFunction(e.Local, args)
-		}
-		return &funcCall{args, function.Returns, function.Impl}
+		return function.Compile(function, args)
 	default:
 		panic(fmt.Sprintf("compile(%T) is not implemented", e))
 	}
 }
 
-func (c *Compiler) compilePredicates(predicates []xpath.Expr) []expr {
-	var arr []expr
+func (c *Compiler) compilePredicates(predicates []xpath.Expr) []Expr {
+	var arr []Expr
 	for _, p := range predicates {
 		arr = append(arr, c.compile(p))
 	}
 	return arr
 }
 
-type expr interface {
-	resultType() DataType
-	eval(ctx *Context) interface{}
+type Expr interface {
+	ResultType() DataType
+	Eval(ctx *Context) interface{}
 }
 
 /************************************************************************/
 
 type numberVal float64
 
-func (numberVal) resultType() DataType {
+func (numberVal) ResultType() DataType {
 	return Number
 }
 
-func (e numberVal) eval(ctx *Context) interface{} {
+func (e numberVal) Eval(ctx *Context) interface{} {
 	return float64(e)
 }
 
 type stringVal string
 
-func (stringVal) resultType() DataType {
+func (stringVal) ResultType() DataType {
 	return String
 }
 
-func (e stringVal) eval(ctx *Context) interface{} {
+func (e stringVal) Eval(ctx *Context) interface{} {
 	return string(e)
 }
 
 type booleanVal bool
 
-func (booleanVal) resultType() DataType {
+func (booleanVal) ResultType() DataType {
 	return Boolean
 }
 
-func (e booleanVal) eval(ctx *Context) interface{} {
+func (e booleanVal) Eval(ctx *Context) interface{} {
 	return bool(e)
 }
 
 /************************************************************************/
 
-func asNodeSet(e expr) expr {
+func asNodeSet(e Expr) Expr {
 	if v, ok := e.(*variable); ok {
 		v.returns = NodeSet
-	} else if e.resultType() != NodeSet {
+	} else if e.ResultType() != NodeSet {
 		panic("node-set expected")
 	}
 	return e
 }
 
-func asString(expr expr) expr {
-	if expr.resultType() == String {
+func asString(expr Expr) Expr {
+	if expr.ResultType() == String {
 		return expr
 	}
 	return &stringFunc{expr}
 }
 
-func asNumber(expr expr) expr {
-	if expr.resultType() == Number {
+func asNumber(expr Expr) Expr {
+	if expr.ResultType() == Number {
 		return expr
 	}
 	return &numberFunc{expr}
 }
 
-func asBoolean(expr expr) expr {
-	if expr.resultType() == Boolean {
+func asBoolean(expr Expr) Expr {
+	if expr.ResultType() == Boolean {
 		return expr
 	}
 	return &booleanFunc{expr}
@@ -242,15 +238,15 @@ func asBoolean(expr expr) expr {
 /************************************************************************/
 
 type negateExpr struct {
-	arg expr
+	arg Expr
 }
 
-func (*negateExpr) resultType() DataType {
+func (*negateExpr) ResultType() DataType {
 	return Number
 }
 
-func (e *negateExpr) eval(ctx *Context) interface{} {
-	return -e.arg.eval(ctx).(float64)
+func (e *negateExpr) Eval(ctx *Context) interface{} {
+	return -e.arg.Eval(ctx).(float64)
 }
 
 /************************************************************************/
@@ -274,17 +270,17 @@ var arithmeticOp = []func(float64, float64) float64{
 }
 
 type arithmeticExpr struct {
-	lhs   expr
-	rhs   expr
+	lhs   Expr
+	rhs   Expr
 	apply func(float64, float64) float64
 }
 
-func (*arithmeticExpr) resultType() DataType {
+func (*arithmeticExpr) ResultType() DataType {
 	return Number
 }
 
-func (e *arithmeticExpr) eval(ctx *Context) interface{} {
-	return e.apply(e.lhs.eval(ctx).(float64), e.rhs.eval(ctx).(float64))
+func (e *arithmeticExpr) Eval(ctx *Context) interface{} {
+	return e.apply(e.lhs.Eval(ctx).(float64), e.rhs.Eval(ctx).(float64))
 }
 
 /************************************************************************/
@@ -299,17 +295,17 @@ var equalityOp = []func(interface{}, interface{}) bool{
 }
 
 type equalityExpr struct {
-	lhs   expr
-	rhs   expr
+	lhs   Expr
+	rhs   Expr
 	apply func(interface{}, interface{}) bool
 }
 
-func (*equalityExpr) resultType() DataType {
+func (*equalityExpr) ResultType() DataType {
 	return Boolean
 }
 
-func (e *equalityExpr) eval(ctx *Context) interface{} {
-	lhs, rhs := e.lhs.eval(ctx), e.rhs.eval(ctx)
+func (e *equalityExpr) Eval(ctx *Context) interface{} {
+	lhs, rhs := e.lhs.Eval(ctx), e.rhs.Eval(ctx)
 	lhsType, rhsType := TypeOf(lhs), TypeOf(rhs)
 	switch {
 	case lhsType == NodeSet && rhsType == NodeSet:
@@ -381,17 +377,17 @@ var relationalOp = []func(float64, float64) bool{
 }
 
 type relationalExpr struct {
-	lhs   expr
-	rhs   expr
+	lhs   Expr
+	rhs   Expr
 	apply func(float64, float64) bool
 }
 
-func (*relationalExpr) resultType() DataType {
+func (*relationalExpr) ResultType() DataType {
 	return Boolean
 }
 
-func (e *relationalExpr) eval(ctx *Context) interface{} {
-	lhs, rhs := e.lhs.eval(ctx), e.rhs.eval(ctx)
+func (e *relationalExpr) Eval(ctx *Context) interface{} {
+	lhs, rhs := e.lhs.Eval(ctx), e.rhs.Eval(ctx)
 	lhsType, rhsType := TypeOf(lhs), TypeOf(rhs)
 	switch {
 	case lhsType == NodeSet && rhsType == NodeSet:
@@ -431,36 +427,36 @@ func (e *relationalExpr) eval(ctx *Context) interface{} {
 /************************************************************************/
 
 type logicalExpr struct {
-	lhs      expr
-	rhs      expr
+	lhs      Expr
+	rhs      Expr
 	lhsValue bool
 }
 
-func (*logicalExpr) resultType() DataType {
+func (*logicalExpr) ResultType() DataType {
 	return Boolean
 }
 
-func (e *logicalExpr) eval(ctx *Context) interface{} {
-	if e.lhs.eval(ctx) == e.lhsValue {
+func (e *logicalExpr) Eval(ctx *Context) interface{} {
+	if e.lhs.Eval(ctx) == e.lhsValue {
 		return e.lhsValue
 	}
-	return e.rhs.eval(ctx)
+	return e.rhs.Eval(ctx)
 }
 
 /************************************************************************/
 
 type unionExpr struct {
-	lhs expr
-	rhs expr
+	lhs Expr
+	rhs Expr
 }
 
-func (*unionExpr) resultType() DataType {
+func (*unionExpr) ResultType() DataType {
 	return NodeSet
 }
 
-func (e *unionExpr) eval(ctx *Context) interface{} {
-	lhs := e.lhs.eval(ctx).([]dom.Node)
-	rhs := e.rhs.eval(ctx).([]dom.Node)
+func (e *unionExpr) Eval(ctx *Context) interface{} {
+	lhs := e.lhs.Eval(ctx).([]dom.Node)
+	rhs := e.rhs.Eval(ctx).([]dom.Node)
 	unique := make(map[dom.Node]struct{})
 	for _, n := range lhs {
 		unique[n] = struct{}{}
@@ -481,11 +477,11 @@ type locationPath struct {
 	steps []*step
 }
 
-func (*locationPath) resultType() DataType {
+func (*locationPath) ResultType() DataType {
 	return NodeSet
 }
 
-func (e *locationPath) eval(ctx *Context) interface{} {
+func (e *locationPath) Eval(ctx *Context) interface{} {
 	var ns []dom.Node
 	if e.abs {
 		ns = []dom.Node{ctx.Document()}
@@ -508,7 +504,7 @@ func (e *locationPath) evalWith(ns []dom.Node, ctx *Context) interface{} {
 type step struct {
 	iter       func(dom.Node) iterator
 	test       func(dom.Node) bool
-	predicates []expr
+	predicates []Expr
 	reverse    bool
 }
 
@@ -544,14 +540,14 @@ func (s *step) eval(ctx []dom.Node, vars Variables) []dom.Node {
 	return r
 }
 
-func evalPredicates(predicates []expr, ns []dom.Node, vars Variables) []dom.Node {
+func evalPredicates(predicates []Expr, ns []dom.Node, vars Variables) []dom.Node {
 	for _, predicate := range predicates {
 		var pr []dom.Node
 		scontext := &Context{nil, 0, len(ns), vars}
 		for _, n := range ns {
 			scontext.Node = n
 			scontext.Pos++
-			pval := predicate.eval(scontext)
+			pval := predicate.Eval(scontext)
 			if i, ok := pval.(float64); ok {
 				if scontext.Pos == int(i) {
 					pr = append(pr, n)
@@ -568,31 +564,31 @@ func evalPredicates(predicates []expr, ns []dom.Node, vars Variables) []dom.Node
 /************************************************************************/
 
 type filterExpr struct {
-	expr       expr
-	predicates []expr
+	expr       Expr
+	predicates []Expr
 }
 
-func (*filterExpr) resultType() DataType {
+func (*filterExpr) ResultType() DataType {
 	return NodeSet
 }
 
-func (e *filterExpr) eval(ctx *Context) interface{} {
-	return evalPredicates(e.predicates, e.expr.eval(ctx).([]dom.Node), ctx.Vars)
+func (e *filterExpr) Eval(ctx *Context) interface{} {
+	return evalPredicates(e.predicates, e.expr.Eval(ctx).([]dom.Node), ctx.Vars)
 }
 
 /************************************************************************/
 
 type pathExpr struct {
-	filter       expr
+	filter       Expr
 	locationPath *locationPath
 }
 
-func (*pathExpr) resultType() DataType {
+func (*pathExpr) ResultType() DataType {
 	return NodeSet
 }
 
-func (e *pathExpr) eval(ctx *Context) interface{} {
-	ns := e.filter.eval(ctx).([]dom.Node)
+func (e *pathExpr) Eval(ctx *Context) interface{} {
+	ns := e.filter.Eval(ctx).([]dom.Node)
 	return e.locationPath.evalWith(ns, ctx)
 }
 
@@ -603,11 +599,11 @@ type variable struct {
 	returns DataType
 }
 
-func (v *variable) resultType() DataType {
+func (v *variable) ResultType() DataType {
 	return v.returns
 }
 
-func (v *variable) eval(ctx *Context) interface{} {
+func (v *variable) Eval(ctx *Context) interface{} {
 	if ctx.Vars == nil {
 		panic(UnresolvedVariableError(v.name))
 	}
@@ -627,19 +623,19 @@ func (v *variable) eval(ctx *Context) interface{} {
 /************************************************************************/
 
 type funcCall struct {
-	args    []expr
+	args    []Expr
 	returns DataType
-	impl    func(ctx *Context, args []interface{}) interface{}
+	impl    func(args []interface{}) interface{}
 }
 
-func (f *funcCall) resultType() DataType {
+func (f *funcCall) ResultType() DataType {
 	return f.returns
 }
 
-func (f *funcCall) eval(ctx *Context) interface{} {
+func (f *funcCall) Eval(ctx *Context) interface{} {
 	args := make([]interface{}, len(f.args))
 	for i, arg := range f.args {
-		args[i] = arg.eval(ctx)
+		args[i] = arg.Eval(ctx)
 	}
-	return f.impl(ctx, args)
+	return f.impl(args)
 }

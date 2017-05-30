@@ -11,7 +11,7 @@ import (
 
 type XPath struct {
 	str  string
-	expr expr
+	expr Expr
 }
 
 func (x *XPath) String() string {
@@ -22,7 +22,7 @@ func (x *XPath) Eval(n dom.Node, vars Variables) (r interface{}, err error) {
 	defer func() {
 		err = panic2error(recover())
 	}()
-	return x.expr.eval(&Context{n, 0, 1, vars}), nil
+	return x.expr.Eval(&Context{n, 0, 1, vars}), nil
 }
 
 type Compiler struct {

@@ -18,7 +18,7 @@ import (
 
 func TestEval(t *testing.T) {
 	functions := FunctionMap{
-		"repeat": &Function{String, []DataType{String, Number}, 2, false, repeat},
+		"repeat": &Function{String, []DataType{String, Number}, 2, false, CompileFunc(repeat)},
 	}
 	data, err := ioutil.ReadFile("testdata/tests.json")
 	if err != nil {
@@ -273,6 +273,6 @@ func getQName(name *dom.Name, uri2prefix map[string]string) string {
 	return fmt.Sprintf("%s:%s", prefix, name.Local)
 }
 
-func repeat(ctx *Context, args []interface{}) interface{} {
+func repeat(args []interface{}) interface{} {
 	return strings.Repeat(args[0].(string), int(args[1].(float64)))
 }
