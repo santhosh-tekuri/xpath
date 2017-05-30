@@ -128,7 +128,7 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 			panic(UnresolvedFunctionError(e.Local))
 		}
 
-		if !function.canAccept(len(e.Args)) {
+		if !function.Args.canAccept(len(e.Args)) {
 			panic(ArgCountError(e.Local))
 		}
 		var args []Expr
@@ -136,7 +136,7 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 			args = make([]Expr, len(e.Args))
 			for i, arg := range e.Args {
 				arg := c.compile(arg)
-				switch function.argType(i) {
+				switch function.Args.typeOf(i) {
 				case Unknown:
 					args[i] = arg
 				case NodeSet:
@@ -148,7 +148,7 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 				case Boolean:
 					args[i] = asBoolean(arg)
 				default:
-					panic(fmt.Sprintf("unexpected arg type %v", function.argType(i)))
+					panic(fmt.Sprintf("unexpected arg type %v", function.Args.typeOf(i)))
 				}
 			}
 		}

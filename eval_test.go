@@ -18,7 +18,7 @@ import (
 
 func TestEval(t *testing.T) {
 	functions := FunctionMap{
-		"repeat": &Function{String, []DataType{String, Number}, 2, false, CompileFunc(repeat)},
+		"repeat": &Function{String, Args{Mandatory(String), Mandatory(Number)}, CompileFunc(repeat)},
 	}
 	data, err := ioutil.ReadFile("testdata/tests.json")
 	if err != nil {

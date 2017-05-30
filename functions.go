@@ -13,23 +13,77 @@ import (
 	"github.com/santhosh-tekuri/dom"
 )
 
-type Function struct {
-	Returns   DataType
-	Args      []DataType
-	Mandatory int
-	Variadic  bool
-	Compile   func(f *Function, args []Expr) Expr
+type Arg int
+
+func Mandatory(t DataType) Arg {
+	return Arg(t)
 }
 
-func (f *Function) canAccept(nArgs int) bool {
-	return nArgs >= f.Mandatory && (f.Variadic || nArgs <= len(f.Args))
+func Optional(t DataType) Arg {
+	return Arg(int(t) + 10)
 }
 
-func (f *Function) argType(i int) DataType {
-	if i < len(f.Args) {
-		return f.Args[i]
+func Variadic(t DataType) Arg {
+	return Arg(int(t) + 20)
+}
+
+type Args []Arg
+
+func (a Args) canAccept(nArgs int) bool {
+	return nArgs >= a.mandatory() && (a.variadic() || nArgs <= len(a))
+}
+
+func (a Args) typeOf(i int) DataType {
+	if i >= len(a) {
+		i = len(a) - 1
 	}
-	return f.Args[len(f.Args)-1]
+	return DataType(a[i] % 10)
+}
+
+func (a Args) validate() {
+	prev := 0
+	for _, arg := range a {
+		div := int(arg) / 10
+		switch div {
+		case 0:
+			if prev != 0 {
+				panic("invalid signature")
+			}
+		case 1:
+			if prev != 0 && prev != 1 {
+				panic("invalid signature")
+			}
+		case 2:
+			if prev >= 2 {
+				panic("invalid signature")
+			}
+		}
+		prev = div
+	}
+}
+
+func (a Args) mandatory() int {
+	c := 0
+	for _, arg := range a {
+		if arg/10 == 0 {
+			c++
+		} else {
+			break
+		}
+	}
+	return c
+}
+
+func (a Args) variadic() bool {
+	return len(a) > 0 && a[len(a)-1]/10 == 2
+}
+
+var a = Args{Mandatory(String), Optional(String), Variadic(String)}
+
+type Function struct {
+	Returns DataType
+	Args    Args
+	Compile func(f *Function, args []Expr) Expr
 }
 
 func CompileFunc(impl func(args []interface{}) interface{}) func(f *Function, args []Expr) Expr {
@@ -40,7 +94,7 @@ func CompileFunc(impl func(args []interface{}) interface{}) func(f *Function, ar
 
 var coreFunctions = map[string]*Function{
 	"string": {
-		String, []DataType{Unknown}, 0, false,
+		String, Args{Optional(Unknown)},
 		func(f *Function, args []Expr) Expr {
 			if len(args) == 0 {
 				return &stringFunc{ContextExpr{}}
@@ -48,7 +102,7 @@ var coreFunctions = map[string]*Function{
 			return &stringFunc{args[0]}
 		}},
 	"number": {
-		Number, []DataType{Unknown}, 0, false,
+		Number, Args{Optional(Unknown)},
 		func(f *Function, args []Expr) Expr {
 			if len(args) == 0 {
 				return &numberFunc{ContextExpr{}}
@@ -56,12 +110,12 @@ var coreFunctions = map[string]*Function{
 			return &numberFunc{args[0]}
 		}},
 	"boolean": {
-		Boolean, []DataType{Unknown}, 0, false,
+		Boolean, Args{Optional(Unknown)},
 		func(f *Function, args []Expr) Expr {
 			return &booleanFunc{args[0]}
 		}},
 	"name": {
-		String, []DataType{NodeSet}, 0, false,
+		String, Args{Optional(NodeSet)},
 		func(f *Function, args []Expr) Expr {
 			if len(args) == 0 {
 				return &qname{ContextExpr{}}
@@ -69,7 +123,7 @@ var coreFunctions = map[string]*Function{
 			return &qname{args[0]}
 		}},
 	"local-name": {
-		String, []DataType{NodeSet}, 0, false,
+		String, Args{Optional(NodeSet)},
 		func(f *Function, args []Expr) Expr {
 			if len(args) == 0 {
 				return &localName{ContextExpr{}}
@@ -77,7 +131,7 @@ var coreFunctions = map[string]*Function{
 			return &localName{args[0]}
 		}},
 	"namespace-uri": {
-		String, []DataType{NodeSet}, 0, false,
+		String, Args{Optional(NodeSet)},
 		func(f *Function, args []Expr) Expr {
 			if len(args) == 0 {
 				return &namespaceURI{ContextExpr{}}
@@ -85,42 +139,42 @@ var coreFunctions = map[string]*Function{
 			return &namespaceURI{args[0]}
 		}},
 	"position": {
-		Number, nil, 0, false,
+		Number, nil,
 		func(f *Function, args []Expr) Expr {
 			return &position{}
 		}},
 	"last": {
-		Number, nil, 0, false,
+		Number, nil,
 		func(f *Function, args []Expr) Expr {
 			return &last{}
 		}},
 	"count": {
-		Number, []DataType{NodeSet}, 1, false,
+		Number, Args{Mandatory(NodeSet)},
 		func(f *Function, args []Expr) Expr {
 			return &count{args[0]}
 		}},
 	"sum": {
-		Number, []DataType{NodeSet}, 1, false,
+		Number, Args{Mandatory(NodeSet)},
 		func(f *Function, args []Expr) Expr {
 			return &sum{args[0]}
 		}},
 	"floor": {
-		Number, []DataType{Number}, 1, false,
+		Number, Args{Mandatory(Number)},
 		func(f *Function, args []Expr) Expr {
 			return &floor{args[0]}
 		}},
 	"ceiling": {
-		Number, []DataType{Number}, 1, false,
+		Number, Args{Mandatory(Number)},
 		func(f *Function, args []Expr) Expr {
 			return &ceiling{args[0]}
 		}},
 	"round": {
-		Number, []DataType{Number}, 1, false,
+		Number, Args{Mandatory(Number)},
 		func(f *Function, args []Expr) Expr {
 			return &round{args[0]}
 		}},
 	"normalize-space": {
-		String, []DataType{String}, 0, false,
+		String, Args{Optional(String)},
 		func(f *Function, args []Expr) Expr {
 			if len(args) == 0 {
 				return &normalizeSpace{asString(ContextExpr{})}
@@ -128,7 +182,7 @@ var coreFunctions = map[string]*Function{
 			return &normalizeSpace{args[0]}
 		}},
 	"string-length": {
-		Number, []DataType{String}, 0, false,
+		Number, Args{Optional(String)},
 		func(f *Function, args []Expr) Expr {
 			if len(args) == 0 {
 				return &stringLength{asString(ContextExpr{})}
@@ -136,32 +190,32 @@ var coreFunctions = map[string]*Function{
 			return &stringLength{args[0]}
 		}},
 	"starts-with": {
-		Boolean, []DataType{String, String}, 2, false,
+		Boolean, Args{Mandatory(String), Mandatory(String)},
 		func(f *Function, args []Expr) Expr {
 			return &startsWith{args[0], args[1]}
 		}},
 	"ends-with": {
-		Boolean, []DataType{String, String}, 2, false,
+		Boolean, Args{Mandatory(String), Mandatory(String)},
 		func(f *Function, args []Expr) Expr {
 			return &endsWith{args[0], args[1]}
 		}},
 	"contains": {
-		Boolean, []DataType{String, String}, 2, false,
+		Boolean, Args{Mandatory(String), Mandatory(String)},
 		func(f *Function, args []Expr) Expr {
 			return &contains{args[0], args[1]}
 		}},
 	"concat": {
-		String, []DataType{String, String}, 2, true,
+		String, Args{Mandatory(String), Mandatory(String), Variadic(String)},
 		func(f *Function, args []Expr) Expr {
 			return &concat{args}
 		}},
 	"translate": {
-		String, []DataType{String, String, String}, 3, false,
+		String, Args{Mandatory(String), Mandatory(String), Mandatory(String)},
 		func(f *Function, args []Expr) Expr {
 			return &translate{args[0], args[1], args[2]}
 		}},
 	"substring": {
-		String, []DataType{String, Number, Number}, 2, false,
+		String, Args{Mandatory(String), Mandatory(Number), Optional(Number)},
 		func(f *Function, args []Expr) Expr {
 			if len(args) == 3 {
 				return &substring{args[0], args[1], args[2]}
@@ -169,32 +223,32 @@ var coreFunctions = map[string]*Function{
 			return &substring{args[0], args[1], nil}
 		}},
 	"substring-before": {
-		String, []DataType{String, String}, 2, false,
+		String, Args{Mandatory(String), Mandatory(String)},
 		func(f *Function, args []Expr) Expr {
 			return &substringBefore{args[0], args[1]}
 		}},
 	"substring-after": {
-		String, []DataType{String, String}, 2, false,
+		String, Args{Mandatory(String), Mandatory(String)},
 		func(f *Function, args []Expr) Expr {
 			return &substringAfter{args[0], args[1]}
 		}},
 	"true": {
-		Boolean, nil, 0, false,
+		Boolean, nil,
 		func(f *Function, args []Expr) Expr {
 			return booleanVal(true)
 		}},
 	"false": {
-		Boolean, nil, 0, false,
+		Boolean, nil,
 		func(f *Function, args []Expr) Expr {
 			return booleanVal(false)
 		}},
 	"not": {
-		Boolean, []DataType{Boolean}, 1, false,
+		Boolean, Args{Mandatory(Boolean)},
 		func(f *Function, args []Expr) Expr {
 			return &not{args[0]}
 		}},
 	"lang": {
-		Boolean, []DataType{String}, 1, false,
+		Boolean, Args{Mandatory(String)},
 		func(f *Function, args []Expr) Expr {
 			return &lang{args[0]}
 		}},
