@@ -47,6 +47,14 @@ var coreFunctions = map[string]*Function{
 			}
 			return &stringFunc{args[0]}
 		}},
+	"number": {
+		Number, []DataType{Unknown}, 0, false,
+		func(f *Function, args []Expr) Expr {
+			if len(args) == 0 {
+				return &numberFunc{ContextExpr{}}
+			}
+			return &numberFunc{args[0]}
+		}},
 	"boolean": {
 		Boolean, []DataType{Unknown}, 0, false,
 		func(f *Function, args []Expr) Expr {
@@ -95,6 +103,21 @@ var coreFunctions = map[string]*Function{
 		Number, []DataType{NodeSet}, 1, false,
 		func(f *Function, args []Expr) Expr {
 			return &sum{args[0]}
+		}},
+	"floor": {
+		Number, []DataType{Number}, 1, false,
+		func(f *Function, args []Expr) Expr {
+			return &floor{args[0]}
+		}},
+	"ceiling": {
+		Number, []DataType{Number}, 1, false,
+		func(f *Function, args []Expr) Expr {
+			return &ceiling{args[0]}
+		}},
+	"round": {
+		Number, []DataType{Number}, 1, false,
+		func(f *Function, args []Expr) Expr {
+			return &round{args[0]}
 		}},
 	"normalize-space": {
 		String, []DataType{String}, 0, false,
@@ -594,7 +617,7 @@ func (e *substring) Eval(ctx *Context) interface{} {
 	if math.IsNaN(d1) {
 		return ""
 	}
-	start := round(d1) - 1
+	start := roundToInt(d1) - 1
 	substrLength := strLength
 	if e.length != nil {
 		d2 := e.length.Eval(ctx).(float64)
@@ -605,7 +628,7 @@ func (e *substring) Eval(ctx *Context) interface{} {
 		} else if math.IsNaN(d2) {
 			substrLength = 0
 		} else {
-			substrLength = round(d2)
+			substrLength = roundToInt(d2)
 		}
 	}
 	if substrLength < 0 {
@@ -636,11 +659,11 @@ func (e *substring) Eval(ctx *Context) interface{} {
 	}
 }
 
-func round(val float64) int {
-	if val < 0 {
-		return int(val - 0.5)
+func roundToInt(val float64) int {
+	if val != 0.5 {
+		return int(math.Floor(val + 0.5))
 	}
-	return int(val + 0.5)
+	return 0
 }
 
 /************************************************************************/
@@ -690,4 +713,54 @@ func (e *lang) Eval(ctx *Context) interface{} {
 		n = n.Parent()
 	}
 	return false
+}
+
+/************************************************************************/
+
+type floor struct {
+	num Expr
+}
+
+func (*floor) ResultType() DataType {
+	return Number
+}
+
+func (e *floor) Eval(ctx *Context) interface{} {
+	return math.Floor(e.num.Eval(ctx).(float64))
+}
+
+/************************************************************************/
+
+type ceiling struct {
+	num Expr
+}
+
+func (*ceiling) ResultType() DataType {
+	return Number
+}
+
+func (e *ceiling) Eval(ctx *Context) interface{} {
+	return math.Ceil(e.num.Eval(ctx).(float64))
+}
+
+/************************************************************************/
+
+type round struct {
+	num Expr
+}
+
+func (*round) ResultType() DataType {
+	return Number
+}
+
+func (e *round) Eval(ctx *Context) interface{} {
+	num := e.num.Eval(ctx).(float64)
+	switch {
+	case math.IsNaN(num) || math.IsInf(num, 0):
+		return num
+	case num != 0.5:
+		return math.Floor(num + 0.5)
+	default:
+		return float64(0)
+	}
 }

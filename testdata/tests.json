@@ -215,7 +215,18 @@
         "/numbers/set/nr/@value = 66": true,
         "'one' < 'two'": false,
         "'one' < 2": false,
-        "1 < 'two'": false
+        "1 < 'two'": false,
+        "floor(1.5)": 1,
+        "floor(-1.5)": -2,
+        "string(floor(1.0 div 0.0 - 2.0 div 0.0))": "NaN",
+        "string(floor(1.0 div 0.0))": "Infinity",
+        "string(floor(-1.0 div 0.0))": "-Infinity",
+        "ceiling(1.5)": 2,
+        "ceiling(-1.5)": -1,
+        "string(ceiling(1.0 div 0.0 - 2.0 div 0.0))": "NaN",
+        "round(1.5)": 2,
+        "round(-1.5)": -1,
+        "string(round(1.0 div 0.0 - 2.0 div 0.0))": "NaN"
       }
     },
     "/numbers/set[1]": {
