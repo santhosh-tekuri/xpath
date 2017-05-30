@@ -55,19 +55,18 @@ func Value2String(v interface{}) string {
 	case string:
 		return v
 	case float64:
-		if math.IsNaN(v) {
+		switch {
+		case math.IsNaN(v):
 			return "NaN"
-		}
-		if math.IsInf(v, +1) {
+		case math.IsInf(v, +1):
 			return "Infinity"
-		}
-		if math.IsInf(v, -1) {
+		case math.IsInf(v, -1):
 			return "-Infinity"
-		}
-		if v == math.Trunc(v) {
+		case v == math.Trunc(v):
 			return strconv.Itoa(int(v))
+		default:
+			return strconv.FormatFloat(v, 'f', -1, 64)
 		}
-		return strconv.FormatFloat(v, 'f', -1, 64)
 	case bool:
 		return strconv.FormatBool(v)
 	}
