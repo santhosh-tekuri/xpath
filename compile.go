@@ -310,15 +310,15 @@ func (*equalityExpr) resultType() DataType {
 
 func (e *equalityExpr) eval(ctx *Context) interface{} {
 	lhs, rhs := e.lhs.eval(ctx), e.rhs.eval(ctx)
-	lhsType, rhsType := typeOf(lhs), typeOf(rhs)
+	lhsType, rhsType := TypeOf(lhs), TypeOf(rhs)
 	switch {
 	case lhsType == NodeSet && rhsType == NodeSet:
 		lhs, rhs := lhs.([]dom.Node), rhs.([]dom.Node)
 		if len(lhs) > 0 && len(rhs) > 0 {
 			for _, n1 := range lhs {
-				n1Str := node2string(n1)
+				n1Str := Node2String(n1)
 				for _, n2 := range rhs {
-					if e.apply(n1Str, node2string(n2)) {
+					if e.apply(n1Str, Node2String(n2)) {
 						return true
 					}
 				}
@@ -328,11 +328,11 @@ func (e *equalityExpr) eval(ctx *Context) interface{} {
 	case lhsType != NodeSet && rhsType != NodeSet:
 		switch {
 		case lhsType == Boolean || rhsType == Boolean:
-			return e.apply(value2Boolean(lhs), value2Boolean(rhs))
+			return e.apply(Value2Boolean(lhs), Value2Boolean(rhs))
 		case lhsType == Number || rhsType == Number:
-			return e.apply(value2Number(lhs), value2Number(rhs))
+			return e.apply(Value2Number(lhs), Value2Number(rhs))
 		default:
-			return e.apply(value2String(lhs), value2String(rhs))
+			return e.apply(Value2String(lhs), Value2String(rhs))
 		}
 	default:
 		var val interface{}
@@ -342,19 +342,19 @@ func (e *equalityExpr) eval(ctx *Context) interface{} {
 		} else {
 			val, nodeSet = lhs, rhs.([]dom.Node)
 		}
-		switch typeOf(val) {
+		switch TypeOf(val) {
 		case Boolean:
-			return e.apply(val, value2Boolean(nodeSet))
+			return e.apply(val, Value2Boolean(nodeSet))
 		case String:
 			for _, n := range nodeSet {
-				if e.apply(val, node2string(n)) {
+				if e.apply(val, Node2String(n)) {
 					return true
 				}
 			}
 			return false
 		default:
 			for _, n := range nodeSet {
-				if e.apply(val, node2number(n)) {
+				if e.apply(val, Node2Number(n)) {
 					return true
 				}
 			}
@@ -392,15 +392,15 @@ func (*relationalExpr) resultType() DataType {
 
 func (e *relationalExpr) eval(ctx *Context) interface{} {
 	lhs, rhs := e.lhs.eval(ctx), e.rhs.eval(ctx)
-	lhsType, rhsType := typeOf(lhs), typeOf(rhs)
+	lhsType, rhsType := TypeOf(lhs), TypeOf(rhs)
 	switch {
 	case lhsType == NodeSet && rhsType == NodeSet:
 		lhs, rhs := lhs.([]dom.Node), rhs.([]dom.Node)
 		if len(lhs) > 0 && len(rhs) > 0 {
 			for _, n1 := range lhs {
-				n1Num := node2number(n1)
+				n1Num := Node2Number(n1)
 				for _, n2 := range rhs {
-					if e.apply(n1Num, node2number(n2)) {
+					if e.apply(n1Num, Node2Number(n2)) {
 						return true
 					}
 				}
@@ -408,19 +408,19 @@ func (e *relationalExpr) eval(ctx *Context) interface{} {
 		}
 		return false
 	case lhsType != NodeSet && rhsType != NodeSet:
-		return e.apply(value2Number(lhs), value2Number(rhs))
+		return e.apply(Value2Number(lhs), Value2Number(rhs))
 	case lhsType == NodeSet:
-		rhs := value2Number(rhs)
+		rhs := Value2Number(rhs)
 		for _, n := range lhs.([]dom.Node) {
-			if e.apply(node2number(n), rhs) {
+			if e.apply(Node2Number(n), rhs) {
 				return true
 			}
 		}
 		return false
 	default:
-		lhs := value2Number(lhs)
+		lhs := Value2Number(lhs)
 		for _, n := range rhs.([]dom.Node) {
-			if e.apply(lhs, node2number(n)) {
+			if e.apply(lhs, Node2Number(n)) {
 				return true
 			}
 		}
@@ -556,7 +556,7 @@ func evalPredicates(predicates []expr, ns []dom.Node, vars Variables) []dom.Node
 				if scontext.Pos == int(i) {
 					pr = append(pr, n)
 				}
-			} else if value2Boolean(pval) {
+			} else if Value2Boolean(pval) {
 				pr = append(pr, n)
 			}
 		}
@@ -620,7 +620,7 @@ func (v *variable) eval(ctx *Context) interface{} {
 			panic(VarMustBeNodeSet(v.name))
 		}
 	}
-	typeOf(r)
+	TypeOf(r)
 	return r
 }
 

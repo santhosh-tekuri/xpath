@@ -154,7 +154,7 @@ func (*numberFunc) resultType() DataType {
 }
 
 func (f *numberFunc) eval(ctx *Context) interface{} {
-	return value2Number(f.arg.eval(ctx))
+	return Value2Number(f.arg.eval(ctx))
 }
 
 /************************************************************************/
@@ -168,7 +168,7 @@ func (*booleanFunc) resultType() DataType {
 }
 
 func (f *booleanFunc) eval(ctx *Context) interface{} {
-	return value2Boolean(f.arg.eval(ctx))
+	return Value2Boolean(f.arg.eval(ctx))
 }
 
 /************************************************************************/
@@ -182,7 +182,7 @@ func (*stringFunc) resultType() DataType {
 }
 
 func (e *stringFunc) eval(ctx *Context) interface{} {
-	return value2String(e.arg.eval(ctx))
+	return Value2String(e.arg.eval(ctx))
 }
 
 /************************************************************************/
@@ -236,7 +236,7 @@ func (*sum) resultType() DataType {
 func (e *sum) eval(ctx *Context) interface{} {
 	var r float64
 	for _, n := range e.arg.eval(ctx).([]dom.Node) {
-		r += node2number(n)
+		r += Node2Number(n)
 	}
 	return r
 }

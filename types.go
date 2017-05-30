@@ -29,7 +29,7 @@ func (r DataType) String() string {
 	return resultTypeNames[r]
 }
 
-func typeOf(v interface{}) DataType {
+func TypeOf(v interface{}) DataType {
 	switch v.(type) {
 	case []dom.Node:
 		return NodeSet
@@ -45,13 +45,13 @@ func typeOf(v interface{}) DataType {
 
 /************************************************************************/
 
-func value2String(v interface{}) string {
+func Value2String(v interface{}) string {
 	switch v := v.(type) {
 	case []dom.Node:
 		if len(v) == 0 {
 			return ""
 		}
-		return node2string(v[0])
+		return Node2String(v[0])
 	case string:
 		return v
 	case float64:
@@ -74,12 +74,12 @@ func value2String(v interface{}) string {
 	panic(fmt.Sprintf("%T is not valid xpath data-type", v))
 }
 
-func value2Number(v interface{}) float64 {
+func Value2Number(v interface{}) float64 {
 	switch v := v.(type) {
 	case []dom.Node:
-		return string2number(value2String(v))
+		return String2Number(Value2String(v))
 	case string:
-		return string2number(v)
+		return String2Number(v)
 	case float64:
 		return v
 	case bool:
@@ -91,7 +91,7 @@ func value2Number(v interface{}) float64 {
 	panic(fmt.Sprintf("%T is not valid xpath data-type", v))
 }
 
-func value2Boolean(v interface{}) bool {
+func Value2Boolean(v interface{}) bool {
 	switch v := v.(type) {
 	case []dom.Node:
 		return len(v) > 0
@@ -107,7 +107,7 @@ func value2Boolean(v interface{}) bool {
 
 /************************************************************************/
 
-func node2string(n dom.Node) string {
+func Node2String(n dom.Node) string {
 	switch n := n.(type) {
 	case *dom.Comment:
 		return n.Data
@@ -126,13 +126,13 @@ func node2string(n dom.Node) string {
 	}
 }
 
-func node2number(n dom.Node) float64 {
-	return string2number(node2string(n))
+func Node2Number(n dom.Node) float64 {
+	return String2Number(Node2String(n))
 }
 
 /************************************************************************/
 
-func string2number(s string) float64 {
+func String2Number(s string) float64 {
 	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return math.NaN()
