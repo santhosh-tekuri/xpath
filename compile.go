@@ -165,14 +165,7 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 func (c *Compiler) compilePredicates(predicates []xpath.Expr) []expr {
 	var arr []expr
 	for _, p := range predicates {
-		predicate := c.compile(p)
-		switch predicate.resultType() {
-		case Number:
-			predicate = &equalityExpr{position{}, predicate, equalityOp[0]}
-		default:
-			predicate = asBoolean(predicate)
-		}
-		arr = append(arr, predicate)
+		arr = append(arr, c.compile(p))
 	}
 	return arr
 }
@@ -558,7 +551,12 @@ func evalPredicates(predicates []expr, ns []dom.Node, vars Variables) []dom.Node
 		for _, n := range ns {
 			scontext.Node = n
 			scontext.Pos++
-			if predicate.eval(scontext).(bool) {
+			pval := predicate.eval(scontext)
+			if i, ok := pval.(float64); ok {
+				if scontext.Pos == int(i) {
+					pr = append(pr, n)
+				}
+			} else if value2Boolean(pval) {
 				pr = append(pr, n)
 			}
 		}
