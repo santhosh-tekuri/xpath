@@ -265,8 +265,8 @@ func (*numberFunc) Returns() DataType {
 	return Number
 }
 
-func (f *numberFunc) Eval(ctx *Context) interface{} {
-	return Value2Number(f.arg.Eval(ctx))
+func (e *numberFunc) Eval(ctx *Context) interface{} {
+	return Value2Number(e.arg.Eval(ctx))
 }
 
 func (e *numberFunc) Simplify() Expr {
@@ -287,8 +287,8 @@ func (*booleanFunc) Returns() DataType {
 	return Boolean
 }
 
-func (f *booleanFunc) Eval(ctx *Context) interface{} {
-	return Value2Boolean(f.arg.Eval(ctx))
+func (e *booleanFunc) Eval(ctx *Context) interface{} {
+	return Value2Boolean(e.arg.Eval(ctx))
 }
 
 func (e *booleanFunc) Simplify() Expr {
@@ -795,9 +795,8 @@ func (e *substring) Eval(ctx *Context) interface{} {
 
 	if strLength == len(str) {
 		return str[start:end]
-	} else {
-		return string([]rune(str)[start:end])
 	}
+	return string([]rune(str)[start:end])
 }
 
 func (e *substring) Simplify() Expr {

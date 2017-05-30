@@ -318,7 +318,7 @@ func (e *locationPath) evalWith(ns []dom.Node, ctx *Context) interface{} {
 
 func (e *locationPath) Simplify() Expr {
 	for _, s := range e.steps {
-		for i, _ := range s.predicates {
+		for i := range s.predicates {
 			s.predicates[i] = Simplify(s.predicates[i])
 		}
 	}
@@ -402,7 +402,7 @@ func (e *filterExpr) Eval(ctx *Context) interface{} {
 
 func (e *filterExpr) Simplify() Expr {
 	e.expr = Simplify(e.expr)
-	for i, _ := range e.predicates {
+	for i := range e.predicates {
 		e.predicates[i] = Simplify(e.predicates[i])
 	}
 	return e
@@ -466,16 +466,16 @@ type funcCall struct {
 	impl    func(args []interface{}) interface{}
 }
 
-func (f *funcCall) Returns() DataType {
-	return f.returns
+func (e *funcCall) Returns() DataType {
+	return e.returns
 }
 
-func (f *funcCall) Eval(ctx *Context) interface{} {
-	args := make([]interface{}, len(f.args))
-	for i, arg := range f.args {
+func (e *funcCall) Eval(ctx *Context) interface{} {
+	args := make([]interface{}, len(e.args))
+	for i, arg := range e.args {
 		args[i] = arg.Eval(ctx)
 	}
-	return f.impl(args)
+	return e.impl(args)
 }
 
 func (e *funcCall) Simplify() Expr {

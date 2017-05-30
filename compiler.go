@@ -364,4 +364,3 @@ var relationalOp = []func(float64, float64) bool{
 		return v1 >= v2
 	},
 }
-
