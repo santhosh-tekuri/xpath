@@ -257,18 +257,6 @@ var coreFunctions = map[string]*Function{
 
 /************************************************************************/
 
-type ContextExpr struct{}
-
-func (ContextExpr) Returns() DataType {
-	return NodeSet
-}
-
-func (ContextExpr) Eval(ctx *Context) interface{} {
-	return []dom.Node{ctx.Node}
-}
-
-/************************************************************************/
-
 type numberFunc struct {
 	arg Expr
 }

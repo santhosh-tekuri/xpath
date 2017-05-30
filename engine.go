@@ -6,7 +6,6 @@ package xpatheng
 
 import (
 	"github.com/santhosh-tekuri/dom"
-	"github.com/santhosh-tekuri/xpath"
 )
 
 type XPath struct {
@@ -18,35 +17,19 @@ func (x *XPath) String() string {
 	return x.str
 }
 
+func (x *XPath) Returns() DataType {
+	return x.expr.Returns()
+}
+
+func (x *XPath) IsStatic() bool {
+	return Literals(x.expr)
+}
+
 func (x *XPath) Eval(n dom.Node, vars Variables) (r interface{}, err error) {
 	defer func() {
 		panic2error(recover(), &err)
 	}()
 	return x.expr.Eval(&Context{n, 0, 1, vars}), nil
-}
-
-type Compiler struct {
-	NS        map[string]string
-	Functions Functions
-}
-
-func (c *Compiler) resolvePrefix(prefix string) (string, bool) {
-	if prefix == "" {
-		return "", true
-	}
-	uri, ok := c.NS[prefix]
-	return uri, ok
-}
-
-func (c *Compiler) Compile(str string) (x *XPath, err error) {
-	defer func() {
-		panic2error(recover(), &err)
-	}()
-	expr, err := xpath.Parse(str)
-	if err != nil {
-		return nil, err
-	}
-	return &XPath{str, Simplify(c.compile(expr))}, nil
 }
 
 type Context struct {
