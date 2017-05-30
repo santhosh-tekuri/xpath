@@ -635,6 +635,15 @@ func (e *locationPath) evalWith(ns []dom.Node, ctx *Context) interface{} {
 	return ns
 }
 
+func (e *locationPath) Simplify() Expr {
+	for _, s := range e.steps {
+		for i, _ := range s.predicates {
+			s.predicates[i] = Simplify(s.predicates[i])
+		}
+	}
+	return e
+}
+
 type step struct {
 	iter       func(dom.Node) iterator
 	test       func(dom.Node) bool
@@ -710,6 +719,14 @@ func (e *filterExpr) Eval(ctx *Context) interface{} {
 	return evalPredicates(e.predicates, e.expr.Eval(ctx).([]dom.Node), ctx.Vars)
 }
 
+func (e *filterExpr) Simplify() Expr {
+	e.expr = Simplify(e.expr)
+	for i, _ := range e.predicates {
+		e.predicates[i] = Simplify(e.predicates[i])
+	}
+	return e
+}
+
 /************************************************************************/
 
 type pathExpr struct {
@@ -724,6 +741,12 @@ func (*pathExpr) Returns() DataType {
 func (e *pathExpr) Eval(ctx *Context) interface{} {
 	ns := e.filter.Eval(ctx).([]dom.Node)
 	return e.locationPath.evalWith(ns, ctx)
+}
+
+func (e *pathExpr) Simplify() Expr {
+	e.filter = Simplify(e.filter)
+	e.locationPath = Simplify(e.locationPath).(*locationPath)
+	return e
 }
 
 /************************************************************************/
