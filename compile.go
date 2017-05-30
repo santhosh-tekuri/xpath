@@ -56,52 +56,7 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 			case xpath.Preceding, xpath.PrecedingSibling, xpath.Ancestor, xpath.AncestorOrSelf:
 				s.reverse = true
 			}
-			switch test := estep.NodeTest.(type) {
-			case xpath.NodeType:
-				switch test {
-				case xpath.Node:
-					s.test = alwaysTrue
-				case xpath.Comment:
-					s.test = isComment
-				case xpath.Text:
-					s.test = isText
-				}
-			case xpath.PITest:
-				s.test = isProcInst(string(test))
-			case *xpath.NameTest:
-				uri, ok := c.resolvePrefix(test.Prefix)
-				if !ok {
-					panic("unresolved prefix " + test.Prefix)
-				}
-				switch estep.Axis {
-				case xpath.Attribute:
-					if test.Local == "*" {
-						if uri == "" {
-							s.test = alwaysTrue
-						} else {
-							s.test = testAttrNs(uri)
-						}
-					} else {
-						s.test = testAttrName(uri, test.Local)
-					}
-				case xpath.Namespace:
-					if test.Prefix == "" && test.Local == "*" {
-						s.test = alwaysTrue
-					} else {
-						s.test = testNamespaceName(uri, test.Local)
-					}
-				default:
-					if test.Local == "*" {
-						if uri == "" {
-							s.test = isElement
-						} else {
-							s.test = testElementNS(uri)
-						}
-					} else {
-						s.test = testElementName(uri, test.Local)
-					}
-				}
-			}
+			s.test = c.nodeTest(estep.Axis, estep.NodeTest)
 			s.predicates = c.compilePredicates(estep.Predicates)
 		}
 		return lp
@@ -159,6 +114,51 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 	default:
 		panic(fmt.Sprintf("compile(%T) is not implemented", e))
 	}
+}
+
+func (c *Compiler) nodeTest(axis xpath.Axis, nodeTest xpath.NodeTest) func(dom.Node) bool {
+	switch test := nodeTest.(type) {
+	case xpath.NodeType:
+		switch test {
+		case xpath.Node:
+			return alwaysTrue
+		case xpath.Comment:
+			return isComment
+		case xpath.Text:
+			return isText
+		}
+	case xpath.PITest:
+		return isProcInst(string(test))
+	case *xpath.NameTest:
+		uri, ok := c.resolvePrefix(test.Prefix)
+		if !ok {
+			panic(UnresolvedPrefixError(test.Prefix))
+		}
+		switch axis {
+		case xpath.Attribute:
+			if test.Local == "*" {
+				if uri == "" {
+					return alwaysTrue
+				}
+				return testAttrNs(uri)
+			}
+			return testAttrName(uri, test.Local)
+		case xpath.Namespace:
+			if test.Prefix == "" && test.Local == "*" {
+				return alwaysTrue
+			}
+			return testNamespaceName(uri, test.Local)
+		default:
+			if test.Local == "*" {
+				if uri == "" {
+					return isElement
+				}
+				return testElementNS(uri)
+			}
+			return testElementName(uri, test.Local)
+		}
+	}
+	panic(fmt.Sprintf("BUG: unexpected nodeTest %T", nodeTest))
 }
 
 func (c *Compiler) compilePredicates(predicates []xpath.Expr) []Expr {
