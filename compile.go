@@ -129,13 +129,13 @@ func (c *Compiler) compile(e xpath.Expr) expr {
 			panic(UnresolvedFunctionError(e.Local))
 		}
 
-		if !function.canAccept(len(e.Params)) {
+		if !function.canAccept(len(e.Args)) {
 			panic(ArgCountError(e.Local))
 		}
 		var args []expr
-		if len(e.Params) > 0 {
-			args = make([]expr, len(e.Params))
-			for i, arg := range e.Params {
+		if len(e.Args) > 0 {
+			args = make([]expr, len(e.Args))
+			for i, arg := range e.Args {
 				arg := c.compile(arg)
 				switch function.argType(i) {
 				case Unknown:
