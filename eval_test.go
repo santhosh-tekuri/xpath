@@ -10,9 +10,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"testing"
-
 	"strings"
+	"testing"
 
 	"github.com/santhosh-tekuri/dom"
 )

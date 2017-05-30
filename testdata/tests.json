@@ -1285,5 +1285,31 @@
         ]
       }
     }
+  },
+  "test.xml": {
+    "/": {
+      "xpaths": {
+        "/root//elem[//xyz/name]": [
+          "/root[1]/elem[1]",
+          "/root[1]/elem[1]/elem[1]"
+        ],
+        "/root//elem[.//xyz/name]": [
+          "/root[1]/elem[1]",
+          "/root[1]/elem[1]/elem[1]"
+        ]
+      }
+    }
+  },
+  "roof.xml": {
+    "/": {
+      "xpaths": {
+        "//roofing-material[type='shingles' and manufacturer='Nash']": [
+          "/roofers[1]/roofing-material[2]"
+        ],
+        "//roofing-material[manufacturer[. = 'Nash'] and type[. = 'shingles']]": [
+          "/roofers[1]/roofing-material[2]"
+        ]
+      }
+    }
   }
 }
