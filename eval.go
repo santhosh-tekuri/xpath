@@ -62,7 +62,7 @@ func (ctx *Context) Document() *dom.Document {
 		if d, ok := n.(*dom.Document); ok {
 			return d
 		}
-		n = parent(n)
+		n = Parent(n)
 	}
 }
 

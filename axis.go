@@ -41,7 +41,7 @@ func selfAxis(n dom.Node) iterator {
 }
 
 func parentAxis(n dom.Node) iterator {
-	return &onceIter{parent(n)}
+	return &onceIter{Parent(n)}
 }
 
 type onceIter struct {
@@ -188,7 +188,7 @@ type ancestorOrSelfIter struct {
 func (iter *ancestorOrSelfIter) next() dom.Node {
 	if iter.n != nil {
 		n := iter.n
-		iter.n = parent(n)
+		iter.n = Parent(n)
 		return n
 	}
 	return nil
@@ -257,7 +257,7 @@ func (iter *followingIter) next() dom.Node {
 			if _, ok := iter.contextNode.(*dom.Document); ok {
 				return nil
 			}
-			iter.contextNode = parent(iter.contextNode)
+			iter.contextNode = Parent(iter.contextNode)
 			if _, ok := iter.contextNode.(*dom.Document); ok {
 				return nil
 			}
@@ -329,7 +329,7 @@ func childrenOrSelfIter(n dom.Node) *reverseIter {
 
 /************************************************************************/
 
-func parent(n dom.Node) dom.Node {
+func Parent(n dom.Node) dom.Node {
 	switch n := n.(type) {
 	case *dom.Attr:
 		return n.Owner

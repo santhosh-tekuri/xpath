@@ -30,7 +30,7 @@ func cmp(n1, n2 dom.Node) int {
 		return 0
 	}
 	if !isChild(n1) && !isChild(n2) {
-		p1, p2 := parent(n1), parent(n2)
+		p1, p2 := Parent(n1), Parent(n2)
 		if p1 == p2 {
 			if isNamespace(n1) {
 				if isAttribute(n2) {
@@ -49,14 +49,14 @@ func cmp(n1, n2 dom.Node) int {
 	d1, d2 := depth(n1), depth(n2)
 	a1, a2 := n1, n2
 	for d1 > d2 {
-		a1 = parent(a1)
+		a1 = Parent(a1)
 		d1--
 	}
 	if a1 == n2 {
 		return 1
 	}
 	for d2 > d1 {
-		a2 = parent(a2)
+		a2 = Parent(a2)
 		d2--
 	}
 	if a2 == n1 {
@@ -65,7 +65,7 @@ func cmp(n1, n2 dom.Node) int {
 
 	// a1 and a2 are now at same depth; and are not the same
 	for {
-		p1, p2 := parent(a1), parent(a2)
+		p1, p2 := Parent(a1), Parent(a2)
 		if p1 == p2 {
 			return cmpSiblings(a1, a2)
 		}
@@ -115,7 +115,7 @@ func isAttribute(n dom.Node) bool {
 func depth(n dom.Node) int {
 	d := 0
 	for {
-		n = parent(n)
+		n = Parent(n)
 		if n == nil {
 			break
 		}

@@ -246,7 +246,7 @@ func getXPath(n dom.Node, uri2prefix map[string]string) string {
 		default:
 			panic(fmt.Sprintf("getXPath(%T) is not implemented", x))
 		}
-		n = parent(n)
+		n = Parent(n)
 		if n == nil {
 			break
 		}
