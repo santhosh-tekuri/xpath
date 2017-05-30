@@ -280,6 +280,14 @@ func (f *numberFunc) Eval(ctx *Context) interface{} {
 	return Value2Number(f.arg.Eval(ctx))
 }
 
+func (e *numberFunc) Simplify() Expr {
+	e.arg = Simplify(e.arg)
+	if Literals(e.arg) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 /************************************************************************/
 
 type booleanFunc struct {
@@ -294,6 +302,14 @@ func (f *booleanFunc) Eval(ctx *Context) interface{} {
 	return Value2Boolean(f.arg.Eval(ctx))
 }
 
+func (e *booleanFunc) Simplify() Expr {
+	e.arg = Simplify(e.arg)
+	if Literals(e.arg) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 /************************************************************************/
 
 type stringFunc struct {
@@ -306,6 +322,14 @@ func (*stringFunc) Returns() DataType {
 
 func (e *stringFunc) Eval(ctx *Context) interface{} {
 	return Value2String(e.arg.Eval(ctx))
+}
+
+func (e *stringFunc) Simplify() Expr {
+	e.arg = Simplify(e.arg)
+	if Literals(e.arg) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
 }
 
 /************************************************************************/
@@ -477,6 +501,14 @@ func (e *normalizeSpace) Eval(ctx *Context) interface{} {
 	return string(buf[:lastWrite])
 }
 
+func (e *normalizeSpace) Simplify() Expr {
+	e.arg = Simplify(e.arg)
+	if Literals(e.arg) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 func isSpace(b byte) bool {
 	switch b {
 	case ' ', '\t', '\n', '\r':
@@ -501,11 +533,19 @@ func (e *startsWith) Eval(ctx *Context) interface{} {
 	return strings.HasPrefix(e.str.Eval(ctx).(string), e.prefix.Eval(ctx).(string))
 }
 
+func (e *startsWith) Simplify() Expr {
+	e.str, e.prefix = Simplify(e.str), Simplify(e.prefix)
+	if Literals(e.str, e.prefix) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 /************************************************************************/
 
 type endsWith struct {
 	str    Expr
-	prefix Expr
+	suffix Expr
 }
 
 func (*endsWith) Returns() DataType {
@@ -513,7 +553,15 @@ func (*endsWith) Returns() DataType {
 }
 
 func (e *endsWith) Eval(ctx *Context) interface{} {
-	return strings.HasSuffix(e.str.Eval(ctx).(string), e.prefix.Eval(ctx).(string))
+	return strings.HasSuffix(e.str.Eval(ctx).(string), e.suffix.Eval(ctx).(string))
+}
+
+func (e *endsWith) Simplify() Expr {
+	e.str, e.suffix = Simplify(e.str), Simplify(e.suffix)
+	if Literals(e.str, e.suffix) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
 }
 
 /************************************************************************/
@@ -531,6 +579,14 @@ func (e *contains) Eval(ctx *Context) interface{} {
 	return strings.Contains(e.str.Eval(ctx).(string), e.substr.Eval(ctx).(string))
 }
 
+func (e *contains) Simplify() Expr {
+	e.str, e.substr = Simplify(e.str), Simplify(e.substr)
+	if Literals(e.str, e.substr) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 /************************************************************************/
 
 type stringLength struct {
@@ -543,6 +599,14 @@ func (*stringLength) Returns() DataType {
 
 func (e *stringLength) Eval(ctx *Context) interface{} {
 	return float64(utf8.RuneCountInString(e.str.Eval(ctx).(string)))
+}
+
+func (e *stringLength) Simplify() Expr {
+	e.str = Simplify(e.str)
+	if Literals(e.str) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
 }
 
 /************************************************************************/
@@ -561,6 +625,16 @@ func (e *concat) Eval(ctx *Context) interface{} {
 		buf.WriteString(arg.Eval(ctx).(string))
 	}
 	return buf.String()
+}
+
+func (e *concat) Simplify() Expr {
+	for i := range e.args {
+		e.args[i] = Simplify(e.args[i])
+	}
+	if Literals(e.args...) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
 }
 
 /************************************************************************/
@@ -609,6 +683,14 @@ func (e *translate) Eval(ctx *Context) interface{} {
 	return buf.String()
 }
 
+func (e *translate) Simplify() Expr {
+	e.str, e.from, e.to = Simplify(e.str), Simplify(e.from), Simplify(e.to)
+	if Literals(e.str, e.from, e.to) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 /************************************************************************/
 
 type substringBefore struct {
@@ -626,6 +708,14 @@ func (e *substringBefore) Eval(ctx *Context) interface{} {
 		return str[:i]
 	}
 	return ""
+}
+
+func (e *substringBefore) Simplify() Expr {
+	e.str, e.match = Simplify(e.str), Simplify(e.match)
+	if Literals(e.str, e.match) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
 }
 
 /************************************************************************/
@@ -646,6 +736,14 @@ func (e *substringAfter) Eval(ctx *Context) interface{} {
 		return str[i+len(match):]
 	}
 	return ""
+}
+
+func (e *substringAfter) Simplify() Expr {
+	e.str, e.match = Simplify(e.str), Simplify(e.match)
+	if Literals(e.str, e.match) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
 }
 
 /************************************************************************/
@@ -713,6 +811,14 @@ func (e *substring) Eval(ctx *Context) interface{} {
 	}
 }
 
+func (e *substring) Simplify() Expr {
+	e.str, e.from, e.length = Simplify(e.str), Simplify(e.from), Simplify(e.length)
+	if Literals(e.str, e.from, e.length) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 func roundToInt(val float64) int {
 	if val != 0.5 {
 		return int(math.Floor(val + 0.5))
@@ -732,6 +838,14 @@ func (*not) Returns() DataType {
 
 func (e *not) Eval(ctx *Context) interface{} {
 	return !e.arg.Eval(ctx).(bool)
+}
+
+func (e *not) Simplify() Expr {
+	e.arg = Simplify(e.arg)
+	if Literals(e.arg) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
 }
 
 /************************************************************************/
@@ -783,6 +897,14 @@ func (e *floor) Eval(ctx *Context) interface{} {
 	return math.Floor(e.num.Eval(ctx).(float64))
 }
 
+func (e *floor) Simplify() Expr {
+	e.num = Simplify(e.num)
+	if Literals(e.num) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 /************************************************************************/
 
 type ceiling struct {
@@ -795,6 +917,14 @@ func (*ceiling) Returns() DataType {
 
 func (e *ceiling) Eval(ctx *Context) interface{} {
 	return math.Ceil(e.num.Eval(ctx).(float64))
+}
+
+func (e *ceiling) Simplify() Expr {
+	e.num = Simplify(e.num)
+	if Literals(e.num) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
 }
 
 /************************************************************************/
@@ -817,4 +947,12 @@ func (e *round) Eval(ctx *Context) interface{} {
 	default:
 		return float64(0)
 	}
+}
+
+func (e *round) Simplify() Expr {
+	e.num = Simplify(e.num)
+	if Literals(e.num) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
 }

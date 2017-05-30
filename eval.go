@@ -46,7 +46,7 @@ func (c *Compiler) Compile(str string) (x *XPath, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &XPath{str, c.compile(expr)}, nil
+	return &XPath{str, Simplify(c.compile(expr))}, nil
 }
 
 type Context struct {

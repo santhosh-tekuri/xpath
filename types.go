@@ -104,6 +104,18 @@ func Value2Boolean(v interface{}) bool {
 	panic(fmt.Sprintf("%T is not valid xpath data-type", v))
 }
 
+func Value2Expr(v interface{}) Expr {
+	switch v := v.(type) {
+	case string:
+		return stringVal(v)
+	case float64:
+		return numberVal(v)
+	case bool:
+		return booleanVal(v)
+	}
+	panic(fmt.Sprintf("%T is not valid literal", v))
+}
+
 /************************************************************************/
 
 func Node2String(n dom.Node) string {

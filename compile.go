@@ -171,6 +171,27 @@ type Expr interface {
 	Eval(ctx *Context) interface{}
 }
 
+func Simplify(e Expr) Expr {
+	if e, ok := e.(interface {
+		Simplify() Expr
+	}); ok {
+		return e.Simplify()
+	}
+	return e
+}
+
+func Literals(exprs ...Expr) bool {
+	for _, expr := range exprs {
+		switch expr.(type) {
+		case nil, stringVal, numberVal, booleanVal:
+			// continue
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 /************************************************************************/
 
 type numberVal float64
@@ -283,6 +304,14 @@ func (e *arithmeticExpr) Eval(ctx *Context) interface{} {
 	return e.apply(e.lhs.Eval(ctx).(float64), e.rhs.Eval(ctx).(float64))
 }
 
+func (e *arithmeticExpr) Simplify() Expr {
+	e.lhs, e.rhs = Simplify(e.lhs), Simplify(e.rhs)
+	if Literals(e.lhs, e.rhs) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 /************************************************************************/
 
 var equalityOp = []func(interface{}, interface{}) bool{
@@ -359,6 +388,14 @@ func (e *equalityExpr) Eval(ctx *Context) interface{} {
 	}
 }
 
+func (e *equalityExpr) Simplify() Expr {
+	e.lhs, e.rhs = Simplify(e.lhs), Simplify(e.rhs)
+	if Literals(e.lhs, e.rhs) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 /************************************************************************/
 
 var relationalOp = []func(float64, float64) bool{
@@ -424,6 +461,14 @@ func (e *relationalExpr) Eval(ctx *Context) interface{} {
 	}
 }
 
+func (e *relationalExpr) Simplify() Expr {
+	e.lhs, e.rhs = Simplify(e.lhs), Simplify(e.rhs)
+	if Literals(e.lhs, e.rhs) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
+}
+
 /************************************************************************/
 
 type logicalExpr struct {
@@ -441,6 +486,17 @@ func (e *logicalExpr) Eval(ctx *Context) interface{} {
 		return e.lhsValue
 	}
 	return e.rhs.Eval(ctx)
+}
+
+func (e *logicalExpr) Simplify() Expr {
+	e.lhs, e.rhs = Simplify(e.lhs), Simplify(e.rhs)
+	if Literals(e.lhs) && e.lhs.Eval(nil) == e.lhsValue {
+		return Value2Expr(e.lhsValue)
+	}
+	if Literals(e.rhs) {
+		return Value2Expr(e.rhs.Eval(nil))
+	}
+	return e
 }
 
 /************************************************************************/
@@ -638,4 +694,14 @@ func (f *funcCall) Eval(ctx *Context) interface{} {
 		args[i] = arg.Eval(ctx)
 	}
 	return f.impl(args)
+}
+
+func (e *funcCall) Simplify() Expr {
+	for i := range e.args {
+		e.args[i] = Simplify(e.args[i])
+	}
+	if Literals(e.args...) {
+		return Value2Expr(e.Eval(nil))
+	}
+	return e
 }
