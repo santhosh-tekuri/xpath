@@ -20,7 +20,7 @@ func (x *XPath) String() string {
 
 func (x *XPath) Eval(n dom.Node, vars Variables) (r interface{}, err error) {
 	defer func() {
-		err = panic2error(recover())
+		panic2error(recover(), &err)
 	}()
 	return x.expr.Eval(&Context{n, 0, 1, vars}), nil
 }
@@ -40,7 +40,7 @@ func (c *Compiler) resolvePrefix(prefix string) (string, bool) {
 
 func (c *Compiler) Compile(str string) (x *XPath, err error) {
 	defer func() {
-		err = panic2error(recover())
+		panic2error(recover(), &err)
 	}()
 	expr, err := xpath.Parse(str)
 	if err != nil {

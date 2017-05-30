@@ -48,15 +48,15 @@ func (e VarMustBeNodeSet) Error() string {
 	return fmt.Sprintf("variable %s must evaluate to node-set", string(e))
 }
 
-func panic2error(r interface{}) error {
-	if r == nil {
-		return nil
+func panic2error(r interface{}, errRef *error) {
+	if r != nil {
+		if _, ok := r.(runtime.Error); ok {
+			panic(r)
+		}
+		if err, ok := r.(error); ok {
+			*errRef = err
+		} else {
+			*errRef = errors.New(fmt.Sprint(r))
+		}
 	}
-	if _, ok := r.(runtime.Error); ok {
-		panic(r)
-	}
-	if err, ok := r.(error); ok {
-		return err
-	}
-	return errors.New(fmt.Sprint(r))
 }
