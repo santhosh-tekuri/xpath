@@ -102,7 +102,7 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 			panic(UnresolvedFunctionError(fname))
 		}
 
-		if !function.Args.valid() {
+		if !function.Args.Valid() {
 			panic(SignatureError(fname))
 		}
 		if !function.Args.canAccept(len(e.Args)) {

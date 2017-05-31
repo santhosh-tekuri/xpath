@@ -56,7 +56,7 @@ func (x *XPath) EvalNodeSet(n dom.Node, vars Variables) ([]dom.Node, error) {
 			return nil, err
 		}
 		if ns, ok := r.([]dom.Node); ok {
-			return ns
+			return ns, nil
 		}
 		return nil, ConversionError{TypeOf(r), NodeSet}
 	default:

@@ -51,7 +51,8 @@ func (a Args) typeOf(i int) DataType {
 	return DataType(a[i] % 10)
 }
 
-func (a Args) valid() bool {
+// Valid tells whether the signature is valid
+func (a Args) Valid() bool {
 	prev := 0
 	for _, arg := range a {
 		div := int(arg) / 10
