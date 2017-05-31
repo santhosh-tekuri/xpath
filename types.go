@@ -33,7 +33,7 @@ const (
 	Boolean
 )
 
-var resultTypeNames = []string{"node-set", "string", "number", "boolean"}
+var resultTypeNames = []string{"unknown", "node-set", "string", "number", "boolean"}
 
 func (r DataType) String() string {
 	return resultTypeNames[r]
