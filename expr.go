@@ -8,8 +8,13 @@ import (
 	"github.com/santhosh-tekuri/dom"
 )
 
+// Expr is interface used to represent a specific type of xpath expression.
 type Expr interface {
+	// Returns returns the DataType of the value that this expression evaluates to.
 	Returns() DataType
+
+	// Eval evaluates against the given context and returns the value
+	// In case of any error, it will panic
 	Eval(ctx *Context) interface{}
 }
 
@@ -47,12 +52,15 @@ func (e booleanVal) Eval(ctx *Context) interface{} {
 
 /************************************************************************/
 
+// ContextExpr represents current node in context.
 type ContextExpr struct{}
 
+// Returns returns the DataType of the value that this expression evaluates to.
 func (ContextExpr) Returns() DataType {
 	return NodeSet
 }
 
+// Eval returns []dom.Node of length 1 which contains the current node in context-set
 func (ContextExpr) Eval(ctx *Context) interface{} {
 	return []dom.Node{ctx.Node}
 }

@@ -14,10 +14,17 @@ import (
 
 // A Compiler represents a xpath 1.0 expression compiler.
 type Compiler struct {
-	NS        map[string]string
+	// NS gives bindings of prefix to uri
+	NS map[string]string
+
+	// Functions gives access to set of user defined functions.
 	Functions Functions
 }
 
+// Compile compiles given xpath 1.0 expression, if successful
+// return a XPath object.
+//
+// Namespace prefixes and functions are resolved during compilation.
 func (c *Compiler) Compile(str string) (x *XPath, err error) {
 	defer func() {
 		panic2error(recover(), &err)
@@ -298,6 +305,10 @@ func (c *Compiler) compilePredicates(predicates []xpath.Expr) []Expr {
 	return arr
 }
 
+// Simplify returns the simplified expression.
+//
+// Simplification does evaluate all static expressions.
+// An Expr that supports simplification implements: interface{ Simplify() Expr
 func Simplify(e Expr) Expr {
 	if e, ok := e.(interface {
 		Simplify() Expr
@@ -307,6 +318,10 @@ func Simplify(e Expr) Expr {
 	return e
 }
 
+// Literals returns true of all given expressions are literal expression.
+//
+// A literal expressions is an expression which wraps string, float64 or bool.
+// An expression that includes only literals are candidates for simplification.
 func Literals(exprs ...Expr) bool {
 	for _, expr := range exprs {
 		switch expr.(type) {

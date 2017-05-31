@@ -50,7 +50,7 @@ type Context struct {
 	Node dom.Node
 
 	// Pos is the position of current node in context-set
-	Pos  int
+	Pos int
 
 	// Size is the size of the context-set
 	Size int
@@ -87,6 +87,8 @@ type Variables interface {
 // Value must be []dom.Node, string, float64 or bool.
 type VariableMap map[string]interface{}
 
+// Eval returns the value bound to given variable.
+// It returns nil if no value is bound.
 func (vm VariableMap) Eval(variable string) interface{} {
 	return vm[variable]
 }
@@ -108,6 +110,8 @@ type Functions interface {
 // Key must be clark-name of function.
 type FunctionMap map[string]*Function
 
+// Resolve returns the *Function bound to given function name.
+// It returns nil if no function is bound.
 func (fm FunctionMap) Resolve(function string) *Function {
 	return fm[function]
 }
