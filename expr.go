@@ -326,7 +326,7 @@ func (e *locationPath) Simplify() Expr {
 }
 
 type step struct {
-	iter       func(dom.Node) iterator
+	iter       func(dom.Node) Iterator
 	test       func(dom.Node) bool
 	predicates []Expr
 	reverse    bool
@@ -342,7 +342,7 @@ func (s *step) eval(ctx []dom.Node, vars Variables) []dom.Node {
 
 		// eval test
 		for {
-			n := iter.next()
+			n := iter.Next()
 			if n == nil {
 				break
 			}

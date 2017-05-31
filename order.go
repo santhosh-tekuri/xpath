@@ -80,9 +80,9 @@ func cmpSiblings(s1, s2 dom.Node) int {
 	} else if !isChild(s2) {
 		return -1
 	}
-	iter := followingSiblingAxis(s1)
+	iter := FollowingSiblingAxis(s1)
 	for {
-		n := iter.next()
+		n := iter.Next()
 		if n == nil {
 			break
 		}

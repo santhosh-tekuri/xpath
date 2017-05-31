@@ -8,39 +8,48 @@ import (
 	"github.com/santhosh-tekuri/dom"
 )
 
-type iterator interface {
-	next() dom.Node
+// Iterator over collection of dom nodes.
+type Iterator interface {
+	// Next returns the next element in the iteration.
+	// Returns nil if the iteration has no more nodes.
+	Next() dom.Node
 }
 
-var iterators = []func(dom.Node) iterator{
-	childAxis,
-	descendantAxis,
-	parentAxis,
-	ancestorAxis,
-	followingSiblingAxis,
-	precedingSiblingAxis,
-	followingAxis,
-	precedingAxis,
-	attributeAxis,
-	namespaceAxis,
-	selfAxis,
-	descendantOrSelfAxis,
-	ancestorOrSelfAxis,
+var iterators = []func(dom.Node) Iterator{
+	ChildAxis,
+	DescendantAxis,
+	ParentAxis,
+	AncestorAxis,
+	FollowingSiblingAxis,
+	PrecedingSiblingAxis,
+	FollowingAxis,
+	PrecedingAxis,
+	AttributeAxis,
+	NamespaceAxis,
+	SelfAxis,
+	DescendantOrSelfAxis,
+	AncestorOrSelfAxis,
 }
 
 type emptyIter struct{}
 
-func (emptyIter) next() dom.Node {
+func (emptyIter) Next() dom.Node {
 	return nil
 }
 
 /************************************************************************/
 
-func selfAxis(n dom.Node) iterator {
+// SelfAxis returns Iterator which contains just the context node itself.
+//
+// This is forward axis.
+func SelfAxis(n dom.Node) Iterator {
 	return &onceIter{n}
 }
 
-func parentAxis(n dom.Node) iterator {
+// ParentAxis returns Iterator which contains the parent of the context node, if there is one.
+//
+// This is forward axis.
+func ParentAxis(n dom.Node) Iterator {
 	return &onceIter{Parent(n)}
 }
 
@@ -48,7 +57,7 @@ type onceIter struct {
 	n dom.Node
 }
 
-func (iter *onceIter) next() dom.Node {
+func (iter *onceIter) Next() dom.Node {
 	if iter.n != nil {
 		n := iter.n
 		iter.n = nil
@@ -59,14 +68,21 @@ func (iter *onceIter) next() dom.Node {
 
 /************************************************************************/
 
-func childAxis(n dom.Node) iterator {
+// ChildAxis returns Iterator which contains the children of the context node.
+//
+// This is forward axis.
+func ChildAxis(n dom.Node) Iterator {
 	if p, ok := n.(dom.Parent); ok {
 		return &sliceIter{p.Children(), 0}
 	}
 	return emptyIter{}
 }
 
-func followingSiblingAxis(n dom.Node) iterator {
+// FollowingSiblingAxis returns Iterator which contains all the following siblings of the context node.
+// If the context node is an attribute node or namespace node, the following-sibling axis is empty.
+//
+// This is forward axis.
+func FollowingSiblingAxis(n dom.Node) Iterator {
 	if p := n.Parent(); p != nil {
 		for i, child := range p.Children() {
 			if n == child {
@@ -77,7 +93,11 @@ func followingSiblingAxis(n dom.Node) iterator {
 	return emptyIter{}
 }
 
-func namespaceAxis(n dom.Node) iterator {
+// NamespaceAxis returns Iterator which contains the namespace nodes of the context node.
+// The axis will be empty unless the context node is an element.
+//
+// This is forward axis.
+func NamespaceAxis(n dom.Node) Iterator {
 	if elem, ok := n.(*dom.Element); ok {
 		m := make(map[string]struct{})
 		ns := []dom.Node{
@@ -108,7 +128,7 @@ type sliceIter struct {
 	i   int
 }
 
-func (iter *sliceIter) next() dom.Node {
+func (iter *sliceIter) Next() dom.Node {
 	if iter.i < len(iter.arr) {
 		n := iter.arr[iter.i]
 		iter.i++
@@ -119,7 +139,11 @@ func (iter *sliceIter) next() dom.Node {
 
 /************************************************************************/
 
-func attributeAxis(n dom.Node) iterator {
+// AttributeAxis returns Iterator which contains the attributes of the context node.
+// The axis will be empty unless the context node is an element.
+//
+// This is forward axis.
+func AttributeAxis(n dom.Node) Iterator {
 	if e, ok := n.(*dom.Element); ok {
 		return &attrIter{e, 0}
 	}
@@ -131,7 +155,7 @@ type attrIter struct {
 	i int
 }
 
-func (iter *attrIter) next() dom.Node {
+func (iter *attrIter) Next() dom.Node {
 	if iter.i < len(iter.e.Attrs) {
 		n := iter.e.Attrs[iter.i]
 		iter.i++
@@ -142,7 +166,11 @@ func (iter *attrIter) next() dom.Node {
 
 /************************************************************************/
 
-func precedingSiblingAxis(n dom.Node) iterator {
+// PrecedingSiblingAxis returns Iterator which contains all the preceding siblings of the context node.
+// If the context node is an attribute node or namespace node, the preceding-sibling axis is empty.
+//
+// This is reverse axis.
+func PrecedingSiblingAxis(n dom.Node) Iterator {
 	if p := n.Parent(); p != nil {
 		for i, child := range n.Parent().Children() {
 			if child == n {
@@ -162,7 +190,7 @@ func (iter *reverseIter) hasNext() bool {
 	return iter.i >= 0
 }
 
-func (iter *reverseIter) next() dom.Node {
+func (iter *reverseIter) Next() dom.Node {
 	if iter.i >= 0 {
 		n := iter.arr[iter.i]
 		iter.i--
@@ -173,11 +201,21 @@ func (iter *reverseIter) next() dom.Node {
 
 /************************************************************************/
 
-func ancestorAxis(n dom.Node) iterator {
+// AncestorAxis returns Iterator which contains the ancestors of the context node.
+// The ancestors of the context node consist of the parent of context node and
+// the parent's parent and so on; thus, the ancestor axis will always include
+// the root node, unless the context node is the root node.
+//
+// This is reverse axis.
+func AncestorAxis(n dom.Node) Iterator {
 	return &ancestorOrSelfIter{n.Parent()}
 }
 
-func ancestorOrSelfAxis(n dom.Node) iterator {
+// AncestorOrSelfAxis returns Iterator which contains the context node and the ancestors of the context node.
+// Thus, the ancestor axis will always include the root node.
+//
+// This is reverse axis.
+func AncestorOrSelfAxis(n dom.Node) Iterator {
 	return &ancestorOrSelfIter{n}
 }
 
@@ -185,7 +223,7 @@ type ancestorOrSelfIter struct {
 	n dom.Node
 }
 
-func (iter *ancestorOrSelfIter) next() dom.Node {
+func (iter *ancestorOrSelfIter) Next() dom.Node {
 	if iter.n != nil {
 		n := iter.n
 		iter.n = Parent(n)
@@ -196,23 +234,31 @@ func (iter *ancestorOrSelfIter) next() dom.Node {
 
 /************************************************************************/
 
-func descendantAxis(n dom.Node) iterator {
-	return &descendantIter{nil, childAxis(n)}
+// DescendantAxis returns Iterator which contains the descendants of the context node.
+// A descendant is a child or a child of a child and so on.
+// Thus the descendant axis never contains attribute or namespace nodes.
+//
+// This is forward axis.
+func DescendantAxis(n dom.Node) Iterator {
+	return &descendantIter{nil, ChildAxis(n)}
 }
 
-func descendantOrSelfAxis(n dom.Node) iterator {
-	return &descendantIter{nil, selfAxis(n)}
+// DescendantOrSelfAxis returns Iterator which contains the context node and the descendants of the context node.
+//
+// This is forward axis.
+func DescendantOrSelfAxis(n dom.Node) Iterator {
+	return &descendantIter{nil, SelfAxis(n)}
 }
 
 type descendantIter struct {
-	stack    []iterator
-	children iterator
+	stack    []Iterator
+	children Iterator
 }
 
-func (iter *descendantIter) next() dom.Node {
+func (iter *descendantIter) Next() dom.Node {
 	var n dom.Node
 	for {
-		n = iter.children.next()
+		n = iter.children.Next()
 		if n != nil {
 			break
 		}
@@ -223,33 +269,38 @@ func (iter *descendantIter) next() dom.Node {
 		iter.stack = iter.stack[:len(iter.stack)-1]
 	}
 	iter.stack = append(iter.stack, iter.children)
-	iter.children = childAxis(n)
+	iter.children = ChildAxis(n)
 	return n
 }
 
 /************************************************************************/
 
-func followingAxis(n dom.Node) iterator {
-	return &followingIter{n, followingSiblingAxis(n), emptyIter{}}
+// FollowingAxis returns Iterator which contains all nodes in the same document as the context node
+// that are after the context node in document order, excluding any descendants and
+// excluding attribute nodes and namespace nodes.
+//
+// This is forward axis.
+func FollowingAxis(n dom.Node) Iterator {
+	return &followingIter{n, FollowingSiblingAxis(n), emptyIter{}}
 }
 
 type followingIter struct {
 	contextNode    dom.Node
-	siblings       iterator
-	currentSibling iterator
+	siblings       Iterator
+	currentSibling Iterator
 }
 
-func (iter *followingIter) next() dom.Node {
+func (iter *followingIter) Next() dom.Node {
 	var n dom.Node
 	for {
-		n = iter.currentSibling.next()
+		n = iter.currentSibling.Next()
 		if n != nil {
 			break
 		}
 
 		var sibling dom.Node
 		for {
-			sibling = iter.siblings.next()
+			sibling = iter.siblings.Next()
 			if sibling != nil {
 				break
 			}
@@ -261,40 +312,45 @@ func (iter *followingIter) next() dom.Node {
 			if _, ok := iter.contextNode.(*dom.Document); ok {
 				return nil
 			}
-			iter.siblings = followingSiblingAxis(iter.contextNode)
+			iter.siblings = FollowingSiblingAxis(iter.contextNode)
 		}
-		iter.currentSibling = descendantOrSelfAxis(sibling)
+		iter.currentSibling = DescendantOrSelfAxis(sibling)
 	}
 	return n
 }
 
 /************************************************************************/
 
-func precedingAxis(n dom.Node) iterator {
-	return &precedingIter{ancestorOrSelfAxis(n), emptyIter{}, &reverseIter{nil, -1}, nil}
+// PrecedingAxis returns Iterator which contains all nodes in the same document as the context node
+// that are before the context node in document order, excluding any ancestors and
+// excluding attribute nodes and namespace nodes.
+//
+// This is forward axis.
+func PrecedingAxis(n dom.Node) Iterator {
+	return &precedingIter{AncestorOrSelfAxis(n), emptyIter{}, &reverseIter{nil, -1}, nil}
 }
 
 type precedingIter struct {
-	ancestorOrSelf   iterator
-	precedingSibling iterator
+	ancestorOrSelf   Iterator
+	precedingSibling Iterator
 	childrenOrSelf   *reverseIter
 	stack            []*reverseIter
 }
 
-func (iter *precedingIter) next() dom.Node {
+func (iter *precedingIter) Next() dom.Node {
 	for {
-		n := iter.childrenOrSelf.next()
+		n := iter.childrenOrSelf.Next()
 		if n == nil {
 			if len(iter.stack) == 0 {
 				var ps dom.Node
 				for {
-					ps = iter.precedingSibling.next()
+					ps = iter.precedingSibling.Next()
 					if ps == nil {
-						as := iter.ancestorOrSelf.next()
+						as := iter.ancestorOrSelf.Next()
 						if as == nil {
 							return nil
 						}
-						iter.precedingSibling = precedingSiblingAxis(as)
+						iter.precedingSibling = PrecedingSiblingAxis(as)
 					} else {
 						break
 					}
@@ -317,9 +373,9 @@ func (iter *precedingIter) next() dom.Node {
 
 func childrenOrSelfIter(n dom.Node) *reverseIter {
 	arr := []dom.Node{n}
-	children := childAxis(n)
+	children := ChildAxis(n)
 	for {
-		c := children.next()
+		c := children.Next()
 		if c == nil {
 			return &reverseIter{arr, len(arr) - 1}
 		}
