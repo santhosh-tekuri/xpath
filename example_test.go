@@ -116,6 +116,6 @@ func ExampleFunctionMap() {
 	}
 	fmt.Printf("Result: %s", result)
 	// Output:
-	// xpath x:join(':', 'one', 'two', 'three') returns value of type number
+	// xpath x:join(':', 'one', 'two', 'three') returns value of type string
 	// Result: one:two:three
 }
