@@ -10,7 +10,7 @@ import (
 	"runtime"
 )
 
-// UnresolvedPrefixError is the error type returned by *Compiler#Compile function.
+// UnresolvedPrefixError is the error type returned by *Compiler.Compile function.
 //
 // It tells that no URI is bound for that prefix.
 type UnresolvedPrefixError string
@@ -28,7 +28,7 @@ func (e UnresolvedVariableError) Error() string {
 	return fmt.Sprintf("unresolved variable: %s", string(e))
 }
 
-// UnresolvedFunctionError is the error type returned by *Compiler#Compile function.
+// UnresolvedFunctionError is the error type returned by *Compiler.Compile function.
 //
 // It tells that no function is bound for that clarkName.
 type UnresolvedFunctionError string
@@ -37,7 +37,7 @@ func (e UnresolvedFunctionError) Error() string {
 	return fmt.Sprintf("unresolved function: %s", string(e))
 }
 
-// SignatureError is the error type returned by *Compiler#Compile function.
+// SignatureError is the error type returned by *Compiler.Compile function.
 //
 // It tells that function registered for that clarkName has invalid signature.
 // """
@@ -51,7 +51,7 @@ func (e SignatureError) Error() string {
 	return fmt.Sprintf("function %s has invalid argument signature", string(e))
 }
 
-// ArgCountError is the error type returned by *Compiler#Compile function.
+// ArgCountError is the error type returned by *Compiler.Compile function.
 //
 // It tells that function registered for that clarkName does not accept the
 // number of args specified in xpath expression.
@@ -61,7 +61,7 @@ func (e ArgCountError) Error() string {
 	return fmt.Sprintf("wrong number of args to function %s", string(e))
 }
 
-// InvalidValueError is the error type returned by *XPath#Eval function.
+// InvalidValueError is the error type returned by *XPath.Eval function.
 //
 // It tells that function registered returned value other than
 // []dom.Node, string, float64 or boolean
@@ -73,7 +73,7 @@ func (e InvalidValueError) Error() string {
 	return fmt.Sprintf("%T is not valid xpath data-type", e.val)
 }
 
-// VarMustBeNodeSet is the error type returned by *XPath#Eval function.
+// VarMustBeNodeSet is the error type returned by *XPath.Eval function.
 //
 // It tells that variable or function that is expected to evaluate to
 // []dom.Node results in value that is not []dom.Node.
@@ -81,6 +81,21 @@ type VarMustBeNodeSet string
 
 func (e VarMustBeNodeSet) Error() string {
 	return fmt.Sprintf("variable %s must evaluate to node-set", string(e))
+}
+
+// ConversionError is the error type returned by *XPath.EvalNodeSet
+//
+// It tells that the value of type Src cannot be converted to value of type Target
+type ConversionError struct {
+	// Src is DataType of source value
+	Src DataType
+
+	// Target is DataType the source value is requested to convert
+	Target DataType
+}
+
+func (e ConversionError) Error() string {
+	return fmt.Sprintf("%v cannot be converted to %v", e.Src, e.Target)
 }
 
 func panic2error(r interface{}, errRef *error) {

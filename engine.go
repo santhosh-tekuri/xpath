@@ -33,15 +33,62 @@ func (x *XPath) IsStatic() bool {
 	return Literals(x.expr)
 }
 
-// Eval evaluates the compiled XPath expression in the specified context and return the result.
+// Eval evaluates the compiled XPath expression in the given context and return the result.
 //
-// The vars argument can be nil. The returned value will be the raw result of the expression.
-// To convert the result, use Value2String, Value2Number, Value2Boolean functions.
+// The vars argument can be nil. The DataType of returned value will be *XPath.Returns()
 func (x *XPath) Eval(n dom.Node, vars Variables) (r interface{}, err error) {
 	defer func() {
 		panic2error(recover(), &err)
 	}()
 	return x.expr.Eval(&Context{n, 0, 1, vars}), nil
+}
+
+// EvalNodeSet evaluates the compiled XPath expression in given context and returns []dom.Node value.
+// if the result cannot be converted to []dom.Node, returns ConversionError
+//
+// The vars argument can be nil.
+func (x *XPath) EvalNodeSet(n dom.Node, vars Variables) ([]dom.Node, error) {
+	if x.Returns() != NodeSet {
+		return nil, ConversionError{x.Returns(), NodeSet}
+	}
+	r, err := x.Eval(n, vars)
+	if err != nil {
+		return nil, err
+	}
+	return r.([]dom.Node), nil
+}
+
+// EvalString evaluates the compiled XPath expression in given context and returns string value.
+//
+// The vars argument can be nil.
+func (x *XPath) EvalString(n dom.Node, vars Variables) (string, error) {
+	r, err := x.Eval(n, vars)
+	if err != nil {
+		return "", err
+	}
+	return Value2String(r), nil
+}
+
+// EvalNumber evaluates the compiled XPath expression in given context and returns float64 value.
+//
+// The vars argument can be nil.
+func (x *XPath) EvalNumber(n dom.Node, vars Variables) (float64, error) {
+	r, err := x.Eval(n, vars)
+	if err != nil {
+		return 0, err
+	}
+	return Value2Number(r), nil
+}
+
+// EvalBoolean evaluates the compiled XPath expression in given context and returns bool value.
+//
+// The vars argument can be nil.
+func (x *XPath) EvalBoolean(n dom.Node, vars Variables) (bool, error) {
+	r, err := x.Eval(n, vars)
+	if err != nil {
+		return false, err
+	}
+	return Value2Boolean(r), nil
 }
 
 // Context represents the evaluation context of xpath engine.
