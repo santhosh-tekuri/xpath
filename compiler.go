@@ -43,16 +43,11 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 	case xpath.String:
 		return stringVal(e)
 	case *xpath.VarRef:
-		uri, ok := c.resolvePrefix(e.Prefix)
-		if !ok {
-			panic(UnresolvedPrefixError(e.Prefix))
-		}
-		return &variable{ClarkName(uri, e.Local), Any}
+		return &variable{ClarkName(c.resolvePrefix(e.Prefix), e.Local), Any}
 	case *xpath.NegateExpr:
 		return &negateExpr{asNumber(c.compile(e.Expr))}
 	case *xpath.BinaryExpr:
-		lhs := c.compile(e.LHS)
-		rhs := c.compile(e.RHS)
+		lhs, rhs := c.compile(e.LHS), c.compile(e.RHS)
 		switch e.Op {
 		case xpath.Add, xpath.Subtract, xpath.Multiply, xpath.Div, xpath.Mod:
 			return &arithmeticExpr{asNumber(lhs), asNumber(rhs), arithmeticOp[e.Op-xpath.Add]}
@@ -70,38 +65,36 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 			panic(fmt.Sprintf("unknown binaryOp %v", e.Op))
 		}
 	case *xpath.LocationPath:
-		lp := new(locationPath)
-		lp.abs = e.Abs
-		for _, estep := range e.Steps {
-			s := new(step)
-			lp.steps = append(lp.steps, s)
-			s.iter = iterators[estep.Axis]
-			switch estep.Axis {
-			case xpath.Preceding, xpath.PrecedingSibling, xpath.Ancestor, xpath.AncestorOrSelf:
-				s.reverse = true
+		var steps []*step
+		if len(e.Steps) > 0 {
+			steps = make([]*step, len(e.Steps))
+			for i, estep := range e.Steps {
+				s := &step{
+					iter:       iterators[estep.Axis],
+					test:       c.nodeTest(estep.Axis, estep.NodeTest),
+					predicates: c.compilePredicates(estep.Predicates),
+				}
+				steps[i] = s
+				switch estep.Axis {
+				case xpath.Preceding, xpath.PrecedingSibling, xpath.Ancestor, xpath.AncestorOrSelf:
+					s.reverse = true
+				}
 			}
-			s.test = c.nodeTest(estep.Axis, estep.NodeTest)
-			s.predicates = c.compilePredicates(estep.Predicates)
 		}
-		return lp
+		return &locationPath{e.Abs, steps}
 	case *xpath.FilterExpr:
 		return &filterExpr{c.compile(e.Expr), c.compilePredicates(e.Predicates)}
 	case *xpath.PathExpr:
 		return &pathExpr{c.compile(e.Filter), c.compile(e.LocationPath).(*locationPath)}
 	case *xpath.FuncCall:
-		uri, ok := c.resolvePrefix(e.Prefix)
-		if !ok {
-			panic(UnresolvedPrefixError(e.Prefix))
-		}
-		fname := ClarkName(uri, e.Local)
+		fname := ClarkName(c.resolvePrefix(e.Prefix), e.Local)
 		function := coreFunctions[fname]
 		if function == nil && c.Functions != nil {
 			function = c.Functions.Resolve(fname)
+			if function == nil {
+				panic(UnresolvedFunctionError(fname))
+			}
 		}
-		if function == nil {
-			panic(UnresolvedFunctionError(fname))
-		}
-
 		if !function.Args.Valid() {
 			panic(SignatureError(fname))
 		}
@@ -141,7 +134,7 @@ func asNodeSet(e Expr) Expr {
 	if v, ok := e.(*variable); ok {
 		v.returns = NodeSet
 	} else if e.Returns() != NodeSet {
-		panic("node-set expected")
+		panic(ConversionError{e.Returns(), NodeSet})
 	}
 	return e
 }
@@ -183,10 +176,7 @@ func (c *Compiler) nodeTest(axis xpath.Axis, nodeTest xpath.NodeTest) func(dom.N
 	case xpath.PITest:
 		return isProcInst(string(test))
 	case *xpath.NameTest:
-		uri, ok := c.resolvePrefix(test.Prefix)
-		if !ok {
-			panic(UnresolvedPrefixError(test.Prefix))
-		}
+		uri := c.resolvePrefix(test.Prefix)
 		switch axis {
 		case xpath.Attribute:
 			if test.Local == "*" {
@@ -289,12 +279,14 @@ func testNamespaceName(uri, local string) func(dom.Node) bool {
 
 /************************************************************************/
 
-func (c *Compiler) resolvePrefix(prefix string) (string, bool) {
+func (c *Compiler) resolvePrefix(prefix string) string {
 	if prefix == "" {
-		return "", true
+		return ""
 	}
-	uri, ok := c.Namespaces[prefix]
-	return uri, ok
+	if uri, ok := c.Namespaces[prefix]; ok {
+		return uri
+	}
+	panic(UnresolvedPrefixError(prefix))
 }
 
 func (c *Compiler) compilePredicates(predicates []xpath.Expr) []Expr {
