@@ -14,8 +14,8 @@ import (
 
 // A Compiler represents a xpath 1.0 expression compiler.
 type Compiler struct {
-	// NS gives bindings of prefix to uri
-	NS map[string]string
+	// Namespaces gives bindings of prefix to uri
+	Namespaces map[string]string
 
 	// Functions gives access to set of user defined functions.
 	Functions Functions
@@ -293,7 +293,7 @@ func (c *Compiler) resolvePrefix(prefix string) (string, bool) {
 	if prefix == "" {
 		return "", true
 	}
-	uri, ok := c.NS[prefix]
+	uri, ok := c.Namespaces[prefix]
 	return uri, ok
 }
 

@@ -48,7 +48,7 @@ func ExampleVariableMap() {
 	uri := "www.jroller.com/santhosh/"
 
 	compiler := &xpatheng.Compiler{
-		NS: map[string]string{
+		Namespaces: map[string]string{
 			"ns": uri,
 		},
 	}
@@ -88,7 +88,7 @@ func ExampleFunctionMap() {
 	uri := "www.jroller.com/santhosh/"
 
 	compiler := &xpatheng.Compiler{
-		NS: map[string]string{
+		Namespaces: map[string]string{
 			"x": uri,
 		},
 		Functions: xpatheng.FunctionMap{
