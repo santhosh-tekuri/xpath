@@ -15,6 +15,7 @@ type XPath struct {
 	expr Expr
 }
 
+// String returns the source xpath expression
 func (x *XPath) String() string {
 	return x.str
 }
