@@ -58,6 +58,7 @@ func TypeOf(v interface{}) DataType {
 
 // Value2String converts given value to a string.
 // The value must be []dom.Node, string, float64 or boolean.
+//
 // See https://www.w3.org/TR/xpath/#function-string.
 func Value2String(v interface{}) string {
 	switch v := v.(type) {
@@ -89,6 +90,7 @@ func Value2String(v interface{}) string {
 
 // Value2Number converts given value to a float64.
 // The value must be []dom.Node, string, float64 or boolean.
+//
 // See https://www.w3.org/TR/xpath/#function-number.
 func Value2Number(v interface{}) float64 {
 	switch v := v.(type) {
@@ -109,6 +111,7 @@ func Value2Number(v interface{}) float64 {
 
 // Value2Boolean converts given value to a bool.
 // The value must be []dom.Node, string, float64 or boolean.
+//
 // See https://www.w3.org/TR/xpath/#function-boolean.
 func Value2Boolean(v interface{}) bool {
 	switch v := v.(type) {
@@ -141,6 +144,7 @@ func Value2Expr(v interface{}) Expr {
 /************************************************************************/
 
 // Node2String returns string value of the node.
+//
 // See https://www.w3.org/TR/xpath/#dt-string-value.
 func Node2String(n dom.Node) string {
 	switch n := n.(type) {

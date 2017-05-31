@@ -12,6 +12,7 @@ import (
 	"github.com/santhosh-tekuri/xpath"
 )
 
+// A Compiler represents a xpath 1.0 expression compiler.
 type Compiler struct {
 	NS        map[string]string
 	Functions Functions
@@ -86,12 +87,9 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 			panic(UnresolvedPrefixError(e.Prefix))
 		}
 		fname := ClarkName(uri, e.Local)
-		var function *Function
-		if c.Functions != nil {
-			function = c.Functions.resolve(fname)
-		}
-		if function == nil && e.Prefix == "" {
-			function = coreFunctions[fname]
+		function := coreFunctions[fname]
+		if function == nil && c.Functions != nil {
+			function = c.Functions.Resolve(fname)
 		}
 		if function == nil {
 			panic(UnresolvedFunctionError(fname))

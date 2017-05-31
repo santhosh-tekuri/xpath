@@ -445,7 +445,7 @@ func (v *variable) Eval(ctx *Context) interface{} {
 	if ctx.Vars == nil {
 		panic(UnresolvedVariableError(v.name))
 	}
-	r := ctx.Vars.eval(v.name)
+	r := ctx.Vars.Eval(v.name)
 	if r == nil {
 		panic(UnresolvedVariableError(v.name))
 	}

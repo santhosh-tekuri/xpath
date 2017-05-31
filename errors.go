@@ -11,6 +11,7 @@ import (
 )
 
 // UnresolvedPrefixError is the error type returned by *Compiler#Compile function.
+//
 // It tells that no URI is bound for that prefix.
 type UnresolvedPrefixError string
 
@@ -19,6 +20,7 @@ func (e UnresolvedPrefixError) Error() string {
 }
 
 // UnresolvedVariableError is the error type returned by *XPath.Eval function.
+//
 // It tells that no variable is bound for that clarkName.
 type UnresolvedVariableError string
 
@@ -27,6 +29,7 @@ func (e UnresolvedVariableError) Error() string {
 }
 
 // UnresolvedFunctionError is the error type returned by *Compiler#Compile function.
+//
 // It tells that no function is bound for that clarkName.
 type UnresolvedFunctionError string
 
@@ -35,11 +38,13 @@ func (e UnresolvedFunctionError) Error() string {
 }
 
 // SignatureError is the error type returned by *Compiler#Compile function.
-// It tells that function registered for that clarkName has invalid signature.
 //
+// It tells that function registered for that clarkName has invalid signature.
+// """
 // the signature is valid only if:
 // - variadic argument can appear only as last argument.
 // - all mandatory arguments must precede optional and variadic arguments.
+// """
 type SignatureError string
 
 func (e SignatureError) Error() string {
@@ -47,6 +52,7 @@ func (e SignatureError) Error() string {
 }
 
 // ArgCountError is the error type returned by *Compiler#Compile function.
+//
 // It tells that function registered for that clarkName does not accept the
 // number of args specified in xpath expression.
 type ArgCountError string
@@ -56,6 +62,7 @@ func (e ArgCountError) Error() string {
 }
 
 // InvalidValueError is the error type returned by *XPath#Eval function.
+//
 // It tells that function registered returned value other than
 // []dom.Node, string, float64 or boolean
 type InvalidValueError struct {
@@ -67,6 +74,7 @@ func (e InvalidValueError) Error() string {
 }
 
 // VarMustBeNodeSet is the error type returned by *XPath#Eval function.
+//
 // It tells that variable or function that is expected to evaluate to
 // []dom.Node results in value that is not []dom.Node.
 type VarMustBeNodeSet string
