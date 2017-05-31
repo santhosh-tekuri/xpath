@@ -49,14 +49,19 @@ func (x *XPath) Eval(n dom.Node, vars Variables) (r interface{}, err error) {
 //
 // The vars argument can be nil.
 func (x *XPath) EvalNodeSet(n dom.Node, vars Variables) ([]dom.Node, error) {
-	if x.Returns() != NodeSet {
+	switch x.Returns() {
+	case NodeSet, Any:
+		r, err := x.Eval(n, vars)
+		if err != nil {
+			return nil, err
+		}
+		if ns, ok := r.([]dom.Node); ok {
+			return ns
+		}
+		return nil, ConversionError{TypeOf(r), NodeSet}
+	default:
 		return nil, ConversionError{x.Returns(), NodeSet}
 	}
-	r, err := x.Eval(n, vars)
-	if err != nil {
-		return nil, err
-	}
-	return r.([]dom.Node), nil
 }
 
 // EvalString evaluates the compiled XPath expression in given context and returns string value.

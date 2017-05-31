@@ -47,7 +47,7 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 		if !ok {
 			panic(UnresolvedPrefixError(e.Prefix))
 		}
-		return &variable{ClarkName(uri, e.Local), Unknown}
+		return &variable{ClarkName(uri, e.Local), Any}
 	case *xpath.NegateExpr:
 		return &negateExpr{asNumber(c.compile(e.Expr))}
 	case *xpath.BinaryExpr:
@@ -114,7 +114,7 @@ func (c *Compiler) compile(e xpath.Expr) Expr {
 			for i, arg := range e.Args {
 				arg := c.compile(arg)
 				switch function.Args.typeOf(i) {
-				case Unknown:
+				case Any:
 					args[i] = arg
 				case NodeSet:
 					args[i] = asNodeSet(arg)

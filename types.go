@@ -17,8 +17,8 @@ import (
 type DataType int
 
 const (
-	// Unknown means the actual type cannot be statically determined.
-	Unknown DataType = iota
+	// Any means the actual type cannot be statically determined.
+	Any DataType = iota
 
 	// NodeSet represents type []dom.Node.
 	NodeSet

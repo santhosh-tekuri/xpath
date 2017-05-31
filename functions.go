@@ -107,7 +107,7 @@ func CompileFunc(impl func(args []interface{}) interface{}) func(f *Function, ar
 
 var coreFunctions = map[string]*Function{
 	"string": {
-		String, Args{Optional(Unknown)},
+		String, Args{Optional(Any)},
 		func(f *Function, args []Expr) Expr {
 			if len(args) == 0 {
 				return &stringFunc{ContextExpr{}}
@@ -115,7 +115,7 @@ var coreFunctions = map[string]*Function{
 			return &stringFunc{args[0]}
 		}},
 	"number": {
-		Number, Args{Optional(Unknown)},
+		Number, Args{Optional(Any)},
 		func(f *Function, args []Expr) Expr {
 			if len(args) == 0 {
 				return &numberFunc{ContextExpr{}}
@@ -123,7 +123,7 @@ var coreFunctions = map[string]*Function{
 			return &numberFunc{args[0]}
 		}},
 	"boolean": {
-		Boolean, Args{Optional(Unknown)},
+		Boolean, Args{Optional(Any)},
 		func(f *Function, args []Expr) Expr {
 			return &booleanFunc{args[0]}
 		}},
