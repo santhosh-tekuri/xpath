@@ -5,4 +5,8 @@
 [![Build Status](https://travis-ci.org/santhosh-tekuri/xpatheng.svg?branch=master)](https://travis-ci.org/santhosh-tekuri/xpatheng)
 [![codecov.io](https://codecov.io/github/santhosh-tekuri/xpatheng/coverage.svg?branch=master)](https://codecov.io/github/santhosh-tekuri/xpatheng?branch=master)
 
-Development in progress...
+Package xpatheng provides XPath 1.0 Processor.
+
+This package implements complete specification https://www.w3.org/TR/xpath/.
+
+see [Examples](https://godoc.org/github.com/santhosh-tekuri/xpatheng#pkg-examples) for usage.
