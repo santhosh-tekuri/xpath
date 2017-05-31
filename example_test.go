@@ -52,7 +52,7 @@ func ExampleVariableMap() {
 			"ns": uri,
 		},
 	}
-	xpath, err := compiler.Compile("$v1 + $v2 * $ns:v3")
+	xpath, err := compiler.Compile("$v1 + $v2 * $ns:v3 - $ns:v4")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -62,7 +62,8 @@ func ExampleVariableMap() {
 	result, err := xpath.EvalNumber(nil, xpatheng.VariableMap{
 		"v1": float64(2),
 		"v2": float64(3),
-		xpatheng.ClarkName(uri, "v3"): float64(4),
+		"{www.jroller.com/santhosh/}v3": float64(4),
+		xpatheng.ClarkName(uri, "v4"):   float64(1),
 	})
 	if err != nil {
 		fmt.Println(err)
@@ -70,6 +71,51 @@ func ExampleVariableMap() {
 	}
 	fmt.Printf("Result: %.2f", result)
 	// Output:
-	// xpath $v1 + $v2 * $ns:v3 returns value of type number
-	// Result: 14.00
+	// xpath $v1 + $v2 * $ns:v3 - $ns:v4 returns value of type number
+	// Result: 13.00
+}
+
+func ExampleFunctionMap() {
+	join := func(args []interface{}) interface{} {
+		sep := args[0].(string)
+		var a []string
+		for _, v := range args[1:] {
+			a = append(a, v.(string))
+		}
+		return strings.Join(a, sep)
+	}
+
+	uri := "www.jroller.com/santhosh/"
+
+	compiler := &xpatheng.Compiler{
+		NS: map[string]string{
+			"x": uri,
+		},
+		Functions: xpatheng.FunctionMap{
+			"{www.jroller.com/santhosh/}join": &xpatheng.Function{
+				Returns: xpatheng.String,
+				Args: xpatheng.Args{
+					xpatheng.Mandatory(xpatheng.String),
+					xpatheng.Variadic(xpatheng.String),
+				},
+				Compile: xpatheng.CompileFunc(join),
+			},
+		},
+	}
+	xpath, err := compiler.Compile("x:join(':', 'one', 'two', 'three')")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("xpath %v returns value of type %v\n", xpath, xpath.Returns())
+
+	result, err := xpath.EvalString(nil, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("Result: %s", result)
+	// Output:
+	// xpath x:join(':', 'one', 'two', 'three') returns value of type number
+	// Result: one:two:three
 }
