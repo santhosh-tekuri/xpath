@@ -44,7 +44,7 @@ func Example() {
 	// Result: Santhosh Kumar Tekuri
 }
 
-func ExampleVars() {
+func ExampleVariableMap() {
 	uri := "www.jroller.com/santhosh/"
 
 	compiler := &xpatheng.Compiler{
