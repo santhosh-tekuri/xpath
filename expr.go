@@ -198,9 +198,9 @@ func (e *relationalExpr) Eval(ctx *Context) interface{} {
 		lhs, rhs := lhs.([]dom.Node), rhs.([]dom.Node)
 		if len(lhs) > 0 && len(rhs) > 0 {
 			for _, n1 := range lhs {
-				n1Num := Node2Number(n1)
+				n1 := Node2Number(n1)
 				for _, n2 := range rhs {
-					if e.apply(n1Num, Node2Number(n2)) {
+					if e.apply(n1, Node2Number(n2)) {
 						return true
 					}
 				}
@@ -239,9 +239,9 @@ func (e *relationalExpr) Simplify() Expr {
 /************************************************************************/
 
 type logicalExpr struct {
-	lhs      Expr
-	rhs      Expr
-	lhsValue bool
+	lhs       Expr
+	rhs       Expr
+	skipValue bool
 }
 
 func (*logicalExpr) Returns() DataType {
@@ -249,19 +249,25 @@ func (*logicalExpr) Returns() DataType {
 }
 
 func (e *logicalExpr) Eval(ctx *Context) interface{} {
-	if e.lhs.Eval(ctx) == e.lhsValue {
-		return e.lhsValue
+	if e.lhs.Eval(ctx) == e.skipValue {
+		return e.skipValue
 	}
 	return e.rhs.Eval(ctx)
 }
 
 func (e *logicalExpr) Simplify() Expr {
 	e.lhs, e.rhs = Simplify(e.lhs), Simplify(e.rhs)
-	if Literals(e.lhs) && e.lhs.Eval(nil) == e.lhsValue {
-		return Value2Expr(e.lhsValue)
-	}
-	if Literals(e.rhs) {
-		return Value2Expr(e.rhs.Eval(nil))
+	switch {
+	case Literals(e.lhs):
+		if e.lhs.Eval(nil) == e.skipValue {
+			return Value2Expr(e.skipValue)
+		}
+		return e.rhs
+	case Literals(e.rhs):
+		if e.rhs.Eval(nil) == e.skipValue {
+			return Value2Expr(e.skipValue)
+		}
+		return e.lhs
 	}
 	return e
 }
