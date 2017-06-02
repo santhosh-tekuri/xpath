@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xpatheng_test
+package xpath_test
 
 import (
 	"encoding/xml"
@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/santhosh-tekuri/dom"
-	"github.com/santhosh-tekuri/xpatheng"
+	"github.com/santhosh-tekuri/xpath"
 )
 
 func Example() {
@@ -26,14 +26,14 @@ func Example() {
 		return
 	}
 
-	xpath, err := new(xpatheng.Compiler).Compile("/developer/name")
+	expr, err := new(xpath.Compiler).Compile("/developer/name")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("xpath %v returns value of type %v\n", xpath, xpath.Returns())
+	fmt.Printf("xpath %v returns value of type %v\n", expr, expr.Returns())
 
-	result, err := xpath.EvalString(doc, nil)
+	result, err := expr.EvalString(doc, nil)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -47,23 +47,23 @@ func Example() {
 func ExampleVariableMap() {
 	uri := "www.jroller.com/santhosh/"
 
-	compiler := &xpatheng.Compiler{
+	compiler := &xpath.Compiler{
 		Namespaces: map[string]string{
 			"ns": uri,
 		},
 	}
-	xpath, err := compiler.Compile("$v1 + $v2 * $ns:v3 - $ns:v4")
+	expr, err := compiler.Compile("$v1 + $v2 * $ns:v3 - $ns:v4")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("xpath %v returns value of type %v\n", xpath, xpath.Returns())
+	fmt.Printf("xpath %v returns value of type %v\n", expr, expr.Returns())
 
-	result, err := xpath.EvalNumber(nil, xpatheng.VariableMap{
+	result, err := expr.EvalNumber(nil, xpath.VariableMap{
 		"v1": float64(2),
 		"v2": float64(3),
 		"{www.jroller.com/santhosh/}v3": float64(4),
-		xpatheng.ClarkName(uri, "v4"):   float64(1),
+		xpath.ClarkName(uri, "v4"):      float64(1),
 	})
 	if err != nil {
 		fmt.Println(err)
@@ -87,29 +87,29 @@ func ExampleFunctionMap() {
 
 	uri := "www.jroller.com/santhosh/"
 
-	compiler := &xpatheng.Compiler{
+	compiler := &xpath.Compiler{
 		Namespaces: map[string]string{
 			"x": uri,
 		},
-		Functions: xpatheng.FunctionMap{
-			"{www.jroller.com/santhosh/}join": &xpatheng.Function{
-				Returns: xpatheng.String,
-				Args: xpatheng.Args{
-					xpatheng.Mandatory(xpatheng.String),
-					xpatheng.Variadic(xpatheng.String),
+		Functions: xpath.FunctionMap{
+			"{www.jroller.com/santhosh/}join": &xpath.Function{
+				Returns: xpath.String,
+				Args: xpath.Args{
+					xpath.Mandatory(xpath.String),
+					xpath.Variadic(xpath.String),
 				},
-				Compile: xpatheng.CompileFunc(join),
+				Compile: xpath.CompileFunc(join),
 			},
 		},
 	}
-	xpath, err := compiler.Compile("x:join(':', 'one', 'two', 'three')")
+	expr, err := compiler.Compile("x:join(':', 'one', 'two', 'three')")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("xpath %v returns value of type %v\n", xpath, xpath.Returns())
+	fmt.Printf("xpath %v returns value of type %v\n", expr, expr.Returns())
 
-	result, err := xpath.EvalString(nil, nil)
+	result, err := expr.EvalString(nil, nil)
 	if err != nil {
 		fmt.Println(err)
 		return

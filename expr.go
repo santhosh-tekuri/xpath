@@ -2,11 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xpatheng
+package xpath
 
 import (
-	"github.com/santhosh-tekuri/dom"
 	"math"
+
+	"github.com/santhosh-tekuri/dom"
 )
 
 // Expr is interface used to represent a specific type of xpath expression.

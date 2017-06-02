@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xpatheng
+package xpath
 
 import (
 	"fmt"
 	"math"
 
 	"github.com/santhosh-tekuri/dom"
-	"github.com/santhosh-tekuri/xpath"
+	xpath "github.com/santhosh-tekuri/xpathparser"
 )
 
 // A Compiler represents a xpath 1.0 expression compiler.

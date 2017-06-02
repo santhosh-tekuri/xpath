@@ -1,12 +1,12 @@
-# xpatheng
+# xpath
 
-[![GoDoc](https://godoc.org/github.com/santhosh-tekuri/xpatheng?status.svg)](https://godoc.org/github.com/santhosh-tekuri/xpatheng)
-[![Go Report Card](https://goreportcard.com/badge/github.com/santhosh-tekuri/xpatheng)](https://goreportcard.com/report/github.com/santhosh-tekuri/xpatheng)
-[![Build Status](https://travis-ci.org/santhosh-tekuri/xpatheng.svg?branch=master)](https://travis-ci.org/santhosh-tekuri/xpatheng)
-[![codecov.io](https://codecov.io/github/santhosh-tekuri/xpatheng/coverage.svg?branch=master)](https://codecov.io/github/santhosh-tekuri/xpatheng?branch=master)
+[![GoDoc](https://godoc.org/github.com/santhosh-tekuri/xpath?status.svg)](https://godoc.org/github.com/santhosh-tekuri/xpath)
+[![Go Report Card](https://goreportcard.com/badge/github.com/santhosh-tekuri/xpath)](https://goreportcard.com/report/github.com/santhosh-tekuri/xpath)
+[![Build Status](https://travis-ci.org/santhosh-tekuri/xpath.svg?branch=master)](https://travis-ci.org/santhosh-tekuri/xpath)
+[![codecov.io](https://codecov.io/github/santhosh-tekuri/xpath/coverage.svg?branch=master)](https://codecov.io/github/santhosh-tekuri/xpath?branch=master)
 
-Package xpatheng provides XPath 1.0 Processor.
+Package xpath provides XPath 1.0 Processor.
 
 This package implements complete specification https://www.w3.org/TR/xpath/.
 
-see [Examples](https://godoc.org/github.com/santhosh-tekuri/xpatheng#pkg-examples) for usage.
+see [Examples](https://godoc.org/github.com/santhosh-tekuri/xpath#pkg-examples) for usage.

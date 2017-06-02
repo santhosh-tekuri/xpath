@@ -9,4 +9,4 @@ This package implements complete specification https://www.w3.org/TR/xpath/.
 
 See examples for usage.
 */
-package xpatheng
+package xpath
