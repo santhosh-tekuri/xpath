@@ -315,10 +315,11 @@ func (e *locationPath) Eval(ctx *Context) interface{} {
 }
 
 func (e *locationPath) evalWith(ns []dom.Node, ctx *Context) interface{} {
+	orderReqd := len(ns) > 1 || len(e.steps) > 1
 	for _, s := range e.steps {
 		ns = s.eval(ns, ctx.Vars)
 	}
-	if len(e.steps) > 1 {
+	if orderReqd {
 		order(ns)
 	}
 	return ns
@@ -354,11 +355,9 @@ func (s *step) eval(ctx []dom.Node, vars Variables) []dom.Node {
 			if n == nil {
 				break
 			}
-			if _, ok := unique[n]; !ok {
-				if s.test(n) {
-					unique[n] = struct{}{}
-					cr = append(cr, n)
-				}
+			if _, ok := unique[n]; !ok && s.test(n) {
+				unique[n] = struct{}{}
+				cr = append(cr, n)
 			}
 		}
 
