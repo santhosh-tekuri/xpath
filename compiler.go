@@ -289,7 +289,7 @@ func (c *Compiler) resolvePrefix(prefix string) string {
 	panic(UnresolvedPrefixError(prefix))
 }
 
-func (c *Compiler) compilePredicates(predicates []xpath.Expr) []Expr {
+func (c *Compiler) compilePredicates(predicates []xpath.Expr) predicates {
 	var arr []Expr
 	for _, p := range predicates {
 		arr = append(arr, c.compile(p))

@@ -295,6 +295,31 @@ func (e *unionExpr) Eval(ctx *Context) interface{} {
 
 /************************************************************************/
 
+type predicates []Expr
+
+func (p predicates) eval(ns []dom.Node, vars Variables) []dom.Node {
+	for _, predicate := range p {
+		var pr []dom.Node
+		scontext := &Context{nil, 0, len(ns), vars}
+		for _, n := range ns {
+			scontext.Node = n
+			scontext.Pos++
+			pval := predicate.Eval(scontext)
+			if i, ok := pval.(float64); ok {
+				if scontext.Pos == int(i) {
+					pr = append(pr, n)
+				}
+			} else if Value2Boolean(pval) {
+				pr = append(pr, n)
+			}
+		}
+		ns = pr
+	}
+	return ns
+}
+
+/************************************************************************/
+
 type locationPath struct {
 	abs   bool
 	steps []*step
@@ -337,7 +362,7 @@ func (e *locationPath) Simplify() Expr {
 type step struct {
 	iter       func(dom.Node) Iterator
 	test       func(dom.Node) bool
-	predicates []Expr
+	predicates predicates
 	reverse    bool
 }
 
@@ -361,7 +386,7 @@ func (s *step) eval(ctx []dom.Node, vars Variables) []dom.Node {
 			}
 		}
 
-		cr = evalPredicates(s.predicates, cr, vars)
+		cr = s.predicates.eval(cr, vars)
 		r = append(r, cr...)
 	}
 
@@ -371,32 +396,11 @@ func (s *step) eval(ctx []dom.Node, vars Variables) []dom.Node {
 	return r
 }
 
-func evalPredicates(predicates []Expr, ns []dom.Node, vars Variables) []dom.Node {
-	for _, predicate := range predicates {
-		var pr []dom.Node
-		scontext := &Context{nil, 0, len(ns), vars}
-		for _, n := range ns {
-			scontext.Node = n
-			scontext.Pos++
-			pval := predicate.Eval(scontext)
-			if i, ok := pval.(float64); ok {
-				if scontext.Pos == int(i) {
-					pr = append(pr, n)
-				}
-			} else if Value2Boolean(pval) {
-				pr = append(pr, n)
-			}
-		}
-		ns = pr
-	}
-	return ns
-}
-
 /************************************************************************/
 
 type filterExpr struct {
 	expr       Expr
-	predicates []Expr
+	predicates predicates
 }
 
 func (*filterExpr) Returns() DataType {
@@ -404,7 +408,7 @@ func (*filterExpr) Returns() DataType {
 }
 
 func (e *filterExpr) Eval(ctx *Context) interface{} {
-	return evalPredicates(e.predicates, e.expr.Eval(ctx).([]dom.Node), ctx.Vars)
+	return e.predicates.eval(e.expr.Eval(ctx).([]dom.Node), ctx.Vars)
 }
 
 func (e *filterExpr) Simplify() Expr {
