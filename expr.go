@@ -6,6 +6,7 @@ package xpatheng
 
 import (
 	"github.com/santhosh-tekuri/dom"
+	"math"
 )
 
 // Expr is interface used to represent a specific type of xpath expression.
@@ -198,10 +199,11 @@ func (e *relationalExpr) Eval(ctx *Context) interface{} {
 		lhs, rhs := lhs.([]dom.Node), rhs.([]dom.Node)
 		if len(lhs) > 0 && len(rhs) > 0 {
 			for _, n1 := range lhs {
-				n1 := Node2Number(n1)
-				for _, n2 := range rhs {
-					if e.apply(n1, Node2Number(n2)) {
-						return true
+				if n1 := Node2Number(n1); !math.IsNaN(n1) {
+					for _, n2 := range rhs {
+						if e.apply(n1, Node2Number(n2)) {
+							return true
+						}
 					}
 				}
 			}
@@ -210,18 +212,20 @@ func (e *relationalExpr) Eval(ctx *Context) interface{} {
 	case lhsType != NodeSet && rhsType != NodeSet:
 		return e.apply(Value2Number(lhs), Value2Number(rhs))
 	case lhsType == NodeSet:
-		rhs := Value2Number(rhs)
-		for _, n := range lhs.([]dom.Node) {
-			if e.apply(Node2Number(n), rhs) {
-				return true
+		if rhs := Value2Number(rhs); !math.IsNaN(rhs) {
+			for _, n := range lhs.([]dom.Node) {
+				if e.apply(Node2Number(n), rhs) {
+					return true
+				}
 			}
 		}
 		return false
 	default:
-		lhs := Value2Number(lhs)
-		for _, n := range rhs.([]dom.Node) {
-			if e.apply(lhs, Node2Number(n)) {
-				return true
+		if lhs := Value2Number(lhs); !math.IsNaN(lhs) {
+			for _, n := range rhs.([]dom.Node) {
+				if e.apply(lhs, Node2Number(n)) {
+					return true
+				}
 			}
 		}
 		return false
