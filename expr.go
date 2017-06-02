@@ -286,17 +286,24 @@ func (*unionExpr) Returns() DataType {
 func (e *unionExpr) Eval(ctx *Context) interface{} {
 	lhs := e.lhs.Eval(ctx).([]dom.Node)
 	rhs := e.rhs.Eval(ctx).([]dom.Node)
-	unique := make(map[dom.Node]struct{})
-	for _, n := range lhs {
-		unique[n] = struct{}{}
-	}
-	for _, n := range rhs {
-		if _, ok := unique[n]; !ok {
-			lhs = append(lhs, n)
+	switch {
+	case len(lhs) == 0:
+		return rhs
+	case len(rhs) == 0:
+		return lhs
+	default:
+		unique := make(map[dom.Node]struct{})
+		for _, n := range lhs {
+			unique[n] = struct{}{}
 		}
+		for _, n := range rhs {
+			if _, ok := unique[n]; !ok {
+				lhs = append(lhs, n)
+			}
+		}
+		order(lhs)
+		return lhs
 	}
-	order(lhs)
-	return lhs
 }
 
 /************************************************************************/
