@@ -234,8 +234,13 @@ func (e *relationalExpr) Eval(ctx *Context) interface{} {
 
 func (e *relationalExpr) Simplify() Expr {
 	e.lhs, e.rhs = Simplify(e.lhs), Simplify(e.rhs)
-	if Literals(e.lhs, e.rhs) {
+	switch {
+	case Literals(e.lhs, e.rhs):
 		return Value2Expr(e.Eval(nil))
+	case Literals(e.lhs) && math.IsNaN(Value2Number(e.lhs.Eval(nil))):
+		return booleanVal(false)
+	case Literals(e.rhs) && math.IsNaN(Value2Number(e.rhs.Eval(nil))):
+		return booleanVal(false)
 	}
 	return e
 }
