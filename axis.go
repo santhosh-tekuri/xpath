@@ -281,42 +281,33 @@ func (iter *descendantIter) Next() dom.Node {
 //
 // This is forward axis.
 func FollowingAxis(n dom.Node) Iterator {
-	return &followingIter{n, FollowingSiblingAxis(n), emptyIter{}}
+	return &followingIter{AncestorOrSelfAxis(n), emptyIter{}, emptyIter{}}
 }
 
 type followingIter struct {
-	contextNode    dom.Node
-	siblings       Iterator
-	currentSibling Iterator
+	ancestorOrSelf   Iterator
+	followingSibling Iterator // followingSibling of ancestorOrSelf
+	descendantOrSelf Iterator // descendantsOrSelf of followingSibling
 }
 
 func (iter *followingIter) Next() dom.Node {
-	var n dom.Node
 	for {
-		n = iter.currentSibling.Next()
-		if n != nil {
-			break
+		if n := iter.descendantOrSelf.Next(); n != nil {
+			return n
 		}
-
-		var sibling dom.Node
 		for {
-			sibling = iter.siblings.Next()
-			if sibling != nil {
+			if sibling := iter.followingSibling.Next(); sibling != nil {
+				iter.descendantOrSelf = DescendantOrSelfAxis(sibling)
 				break
 			}
-
-			if _, ok := iter.contextNode.(*dom.Document); ok {
+			switch ancestor := iter.ancestorOrSelf.Next(); ancestor.(type) {
+			case nil, *dom.Document:
 				return nil
+			default:
+				iter.followingSibling = FollowingSiblingAxis(ancestor)
 			}
-			iter.contextNode = Parent(iter.contextNode)
-			if _, ok := iter.contextNode.(*dom.Document); ok {
-				return nil
-			}
-			iter.siblings = FollowingSiblingAxis(iter.contextNode)
 		}
-		iter.currentSibling = DescendantOrSelfAxis(sibling)
 	}
-	return n
 }
 
 /************************************************************************/
@@ -325,7 +316,7 @@ func (iter *followingIter) Next() dom.Node {
 // that are before the context node in document order, excluding any ancestors and
 // excluding attribute nodes and namespace nodes.
 //
-// This is forward axis.
+// This is reverse axis.
 func PrecedingAxis(n dom.Node) Iterator {
 	return &precedingIter{AncestorOrSelfAxis(n), emptyIter{}, &reverseIter{nil, -1}, nil}
 }
