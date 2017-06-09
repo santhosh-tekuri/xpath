@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package xpatheng provides XPath 1.0 Processor.
+Package xpath provides XPath 1.0 Processor.
 
 This package implements complete specification https://www.w3.org/TR/xpath/.
 
