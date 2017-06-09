@@ -16,6 +16,43 @@ import (
 	"github.com/santhosh-tekuri/dom"
 )
 
+func TestSimplify(t *testing.T) {
+	tests := map[string]interface{}{
+		`number(concat('1','2','3'))`:   float64(123),
+		`boolean('santhosh')`:           true,
+		`boolean('')`:                   false,
+		`1<'santhosh'`:                  false,
+		`'santhosh'<1`:                  false,
+		`//employee/name<'santhosh'`:    false,
+		`'santhosh'<//employee/name`:    false,
+		`'santhosh' or //employee/name`: true,
+		`'' and //employee/name`:        false,
+		`//employee/name or 'santhosh'`: true,
+		`//employee/name and ''`:        false,
+	}
+	compiler := new(Compiler)
+	for xpath, expected := range tests {
+		t.Logf("%v -> %v", xpath, expected)
+		expr, err := compiler.Compile(xpath)
+		if err != nil {
+			t.Errorf("FAIL: %s: %v", xpath, err)
+			continue
+		}
+		if !expr.IsStatic() {
+			t.Errorf("FAIL: %s: must be static", xpath)
+			continue
+		}
+		actual, err := expr.Eval(nil, nil)
+		if err != nil {
+			t.Errorf("FAIL: %s: %v", xpath, err)
+			continue
+		}
+		if actual != expected {
+			t.Errorf("FAIL: xpath: %v expected: %v actual: %v", xpath, expected, actual)
+		}
+	}
+}
+
 func TestEval(t *testing.T) {
 	functions := FunctionMap{
 		"repeat": &Function{String, Args{Mandatory(String), Mandatory(Number)}, CompileFunc(repeat)},
