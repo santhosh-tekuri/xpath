@@ -1,0 +1,4 @@
+github.com/santhosh-tekuri/dom v1.0.0 h1:iukJN1RLJceCwEwfB6chKAEcKWZz3m3oAfgTk2SNPMs=
+github.com/santhosh-tekuri/dom v1.0.0/go.mod h1:PJxteHSeKwKlE4D5pQroDxPqCEGsOC6FnfqdjpMWU1E=
+github.com/santhosh-tekuri/xpathparser v1.0.0 h1:+ilNkuGtwOAHHd5o69zQr6jHLWvwqh+dxilSbK/3x/I=
+github.com/santhosh-tekuri/xpathparser v1.0.0/go.mod h1:0i+s5wrvUEcP0L1s6TdqF1wDaFMJ4BkROa9JubccWbE=
